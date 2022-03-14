@@ -3,7 +3,7 @@ import gqylpy_datastruct as g
 
 setuptools.setup(
     name=g.__name__,
-    version='.'.join(str(n) for n in g.__version__),
+    version='.'.join(str(v) for v in g.__version__),
     author='竹永康',
     author_email='gqylpy@outlook.com',
     license='Apache 2.0',
