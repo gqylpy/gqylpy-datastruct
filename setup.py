@@ -7,9 +7,10 @@ setuptools.setup(
     author='竹永康',
     author_email='gqylpy@outlook.com',
     license='Apache 2.0',
-    long_description='',
-    url='',
+    long_description=open('README.md', encoding='utf8').read(),
+    url='https://github.com/gqylpy/gqylpy-datastruct',
     packages=[g.__name__],
+    requires=[],
     install_requires=[],
     classifiers=[
         'Environment :: Web Environment',

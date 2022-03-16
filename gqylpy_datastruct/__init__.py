@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'dev1'
+__version__ = 1, 0, 'dev2'
 
 
 class DataBlueprint:
@@ -91,7 +91,7 @@ class _______G________Q________Y_______L_______P_______Y_______:
     gpack = sys.modules[__name__]
     gcode = globals()[f'g {__name__[7:]}']
 
-    for gname, ifunc in globals().items():
+    for gname in globals():
         if gname[0] != '_' and hasattr(gcode, gname):
             setattr(gpack, gname, getattr(gcode, gname))
 

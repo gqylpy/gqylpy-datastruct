@@ -33,7 +33,7 @@ import copy
 import datetime as dt
 
 import gqylpy_exception as ge
-import gqylpy_options   as gopt
+import gqylpy_option    as gopt
 import gqylpy_import    as gimport
 
 module = re.__class__
