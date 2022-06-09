@@ -36,7 +36,7 @@ import gqylpy_exception as ge
 import gqylpy_option    as gopt
 import gqylpy_import    as gimport
 
-module = re.__class__
+module = os.__class__
 
 unique = 'gqylpy-d82644a2db26dbd60b039c79d'
 
@@ -238,7 +238,8 @@ class DataBlueprint:
             if value.__class__ is str:
                 raw_value = value
                 try:
-                    value = gimport(value)
+                    path, _, func = value.rpartition('.')
+                    value = gimport(path, func)
                     if not callable(value):
                         raise ge.BlueprintVerifyError({
                             'keypath': keypath,
@@ -246,7 +247,7 @@ class DataBlueprint:
                             'msg': "It's not callable."
                         })
                 except (ModuleNotFoundError, AttributeError) as e:
-                    if re.fullmatch('[a-zA-Z_][\w.]+?', value):
+                    if re.fullmatch(r'[a-zA-Z_][\w.]+?', value):
                         raise ge.BlueprintVerifyError({
                             'keypath': f'{keypath}.{key}',
                             'value': full_value or value,
@@ -272,7 +273,8 @@ class DataBlueprint:
     def verify_callback(keypath: str, key: str, value, blueprint: dict):
         if value.__class__ is str:
             try:
-                value = gimport(value)
+                path, _, func = value.rpartition('.')
+                value = gimport(path, func)
             except (ModuleNotFoundError, AttributeError) as e:
                 raise ge.BlueprintCallbackError({
                     'keypath': keypath,
