@@ -160,7 +160,7 @@ class DataBlueprint:
             raise ge.BlueprintOptionError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': f'Option Type must be a "str", not "{x}".'
+                'msg': f'Option type must be a "str", not "{x}".'
             })
         elif value[:2] == '--':
             shortopts, longopts, name = '', [value[2:] + '='], value[2:]

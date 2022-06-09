@@ -16,7 +16,7 @@ blueprint = {
     'nodeList': {
         'type': 'list',
         'items': {
-            'type': 'dict',
+            'type': dict,
             'branch': {
                 'address': {'type': 'str', 'verify': ['\d+\.\d+\.\d+\.\d+', '([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}']},
                 'username': {'type': 'str', 'default': 'root'},
@@ -31,6 +31,11 @@ blueprint = {
         'default': 15,
         'coerce': 'int',
         'option': '--timeout',
+    },
+    'flag': {
+        'type': bool,
+        'default': True,
+        'option': '--flag',
     }
 }
 data = {
@@ -69,4 +74,6 @@ err: dict = datastruct.verify(data)
 
 print(err or data)
 
-import paramiko
+import json
+with open('data.json', 'w', encoding='utf8') as f:
+    json.dump(data, f)
