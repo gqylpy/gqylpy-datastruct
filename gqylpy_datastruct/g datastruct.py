@@ -336,7 +336,34 @@ class DataValidator:
     def begin_verify(self, keypath: str, blueprint: dict, value, data, key):
         option, env = blueprint.get('option'), blueprint.get('env')
 
-        if value == unique:
+        # if value == unique:
+        #     if 'default' not in blueprint:
+        #         return 0, {
+        #             'title': 'DataNotFoundError',
+        #             'keypath': keypath,
+        #             'msg': 'Data not found.'
+        #         }
+        #     value = data[key] = blueprint['default']
+        #
+        # if env:
+        #     code, value = self.verify_env(keypath, blueprint['env'], value, data, key)
+        #     if not code:
+        #         return 0, value
+        #
+        # if option:
+        #     code, value = self.verify_option(keypath, blueprint['option'], value, data, key)
+        #     if not code:
+        #         return 0, value
+
+        if option:
+            code, value = self.verify_option(keypath, blueprint['option'], value, data, key)
+            if not code:
+                return 0, value
+        elif env:
+            code, value = self.verify_env(keypath, blueprint['env'], value, data, key)
+            if not code:
+                return 0, value
+        elif value == unique:
             if 'default' not in blueprint:
                 return 0, {
                     'title': 'DataNotFoundError',
@@ -344,16 +371,6 @@ class DataValidator:
                     'msg': 'Data not found.'
                 }
             value = data[key] = blueprint['default']
-
-        if env:
-            code, value = self.verify_env(keypath, blueprint['env'], value, data, key)
-            if not code:
-                return 0, value
-
-        if option:
-            code, value = self.verify_option(keypath, blueprint['option'], value, data, key)
-            if not code:
-                return 0, value
 
         for name in 'type', 'coerce', 'enum', 'set', 'verify', 'callback':
             try:
@@ -370,13 +387,13 @@ class DataValidator:
     @staticmethod
     def verify_option(_, option: str, value, data, key) -> tuple:
         if option is not None:
-            data[key] = option
+            value = data[key] = option
         return 1, value
 
     @staticmethod
     def verify_env(_, env: str, value, data, key) -> tuple:
         if env is not None:
-            data[key] = env
+            value = data[key] = env
         return 1, value
 
     @staticmethod

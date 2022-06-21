@@ -1,4 +1,6 @@
 import base64
+import sys
+
 from gqylpy_datastruct import DataBlueprint
 
 blueprint = {
@@ -30,11 +32,12 @@ blueprint = {
         'type': ('int', 'str'),
         'default': 15,
         'coerce': 'int',
-        'option': '--timeout',
+        # 'option': '--timeout',
     },
     'flag': {
-        'type': bool,
-        'default': True,
+        'type': (str, bool),
+        # 'default': False,
+        'coerce': bool,
         'option': '--flag',
     }
 }
@@ -68,7 +71,7 @@ data = {
         }
     ]
 }
-
+sys.argv.append('--flag')
 datastruct = DataBlueprint(blueprint)
 err: dict = datastruct.verify(data)
 
