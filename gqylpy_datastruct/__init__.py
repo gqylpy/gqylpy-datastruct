@@ -13,7 +13,7 @@
 ─██████████████─████████████████───────██████───────██████████████─██████───────────────██████───────
 ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
-Copyright © 2022 GQYLPY. 竹永康 <gqylpy@outlook.com>
+Copyright (c) 2022 GQYLPY <http://gqylpy.com>. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha5'
+__version__ = 1, 0, 'alpha6'
+__author__ = '竹永康 <gqylpy@outlook.com>'
+__source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
 
 class DataBlueprint:
