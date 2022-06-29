@@ -31,6 +31,7 @@ import os
 import re
 import sys
 import copy
+import inspect
 import datetime as dt
 
 import gqylpy_exception as ge
@@ -59,7 +60,9 @@ class DataBlueprint:
     def __init__(self, blueprint: dict):
         if blueprint.__class__ is not dict:
             x: str = blueprint.__class__.__name__
-            raise ge.BlueprintTypeError(f'Blueprint type must be a "dict", not "{x}".')
+            raise ge.BlueprintTypeError(
+                f'Blueprint type must be a "dict", not "{x}".'
+            )
 
         self.blueprint = copy.deepcopy(blueprint)
 
@@ -69,7 +72,7 @@ class DataBlueprint:
     def __iter__(self):
         yield from self.blueprint.items()
 
-    def verify(self, data: dict, *, else_raise: bool = False) -> (dict, None):
+    def verify(self, data: dict, *, else_raise: bool = False):
         return DataValidator(data, self).verify(else_raise=else_raise)
 
     def decompose(self, keypath: str, blueprint: dict):
@@ -90,7 +93,8 @@ class DataBlueprint:
                     raise ge.BlueprintVerifyMethodError({
                         'keypath': keypath,
                         'verify_method': key,
-                        'msg': f'There is no "{key}" verification method.'
+                        'msg': f'Unsupported verification method "{key}".',
+                        'supported_verify_method': verify_method_supported
                     })
                 verify_func(keypath, key, value, blueprint)
 
@@ -99,6 +103,7 @@ class DataBlueprint:
                 'keypath': keypath,
                 'msg': '"branch" and "items" cannot exist together.'
             })
+
         if branch:
             self.check_limb(keypath, branch, 'branch', blueprint)
             for key, sub_blueprint in branch.items():
@@ -118,17 +123,30 @@ class DataBlueprint:
                 name: limb
             })
 
-        notdefine = [x for x in ('option', 'option_bool', 'env', 'coerce', 'enum', 'set') if blueprint.get(x)]
+        notdefine = [x for x in (
+            'option', 'option_bool', 'env', 'coerce', 'enum', 'set'
+        ) if blueprint.get(x)]
+
         if notdefine:
+            x: str = f'"{notdefine[0]}"' if len(notdefine) == 1 else notdefine
             raise ge.BlueprintLimbError({
                 'keypath': keypath,
-                'msg': f'''Limb can't define {notdefine}.'''
+                'msg': f'Limb can not define {x}.'
             })
 
-    def verify_type(self, keypath: str, key: str, value: (type, tuple, list), blueprint: dict, *, full_value=None):
+    def verify_type(
+            self,
+            keypath: str,
+            key: str,
+            value: (type, str, tuple, list),
+            blueprint: dict,
+            *,
+            full_value: (tuple, list) = None
+    ):
         if value.__class__ in (tuple, list) and not full_value:
             blueprint[key] = tuple(self.verify_type(
-                keypath, key, v, blueprint, full_value=value) for v in value)
+                keypath, key, v, blueprint, full_value=value
+            ) for v in value)
         else:
             try:
                 value = types[value]
@@ -139,7 +157,7 @@ class DataBlueprint:
                 raise ge.BlueprintTypeError({
                     'keypath': f'{keypath}.{key}',
                     'value': value,
-                    'msg': 'Unsupported type.',
+                    'msg': f'Unsupported type.',
                     'supported_types': types_supported,
                     'hint': 'If you need to define multiple types, use "tuple" or "list".'
                 })
@@ -149,10 +167,22 @@ class DataBlueprint:
 
             blueprint[key] = value
 
-    def verify_option(self, keypath: str, key: str, value: str, blueprint: dict, *, full_value=None, boole: bool = False):
+    def verify_option(
+            self,
+            keypath: str,
+            key: str,
+            value: (str, type, list),
+            blueprint: dict,
+            *,
+            full_value: (tuple, list) = None,
+            boole: bool = False
+    ):
         if value.__class__ in (tuple, list) and not full_value:
             for v in value:
-                self.verify_option(keypath, key, v, blueprint, full_value=value, boole=boole)
+                self.verify_option(
+                    keypath, key, v, blueprint,
+                    full_value=value, boole=boole
+                )
         elif value.__class__ is not str:
             x: str = value.__class__.__name__
             raise ge.BlueprintOptionError({
@@ -162,9 +192,18 @@ class DataBlueprint:
                 'hint': 'If you need to define multiple options, use "tuple" or "list".'
             })
         if not full_value:
-            blueprint[key] = getopt(*[value] if value.__class__ is str else value, boole=boole)
+            blueprint[key] = getopt(
+                *[value] if value.__class__ is str else value,
+                boole=boole
+            )
 
-    def verify_option_bool(self, keypath: str, key: str, value: str, blueprint: dict):
+    def verify_option_bool(
+            self,
+            keypath: str,
+            key: str,
+            value: (str, type, list),
+            blueprint: dict
+    ):
         self.verify_option(keypath, key, value, blueprint, boole=True)
 
     @staticmethod
@@ -174,12 +213,12 @@ class DataBlueprint:
             raise ge.BlueprintENVError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': f'ENV type must be a "str", not "{x}".'
+                'msg': f'The "env" type must be a "str", not "{x}".'
             })
         blueprint[key] = os.getenv(value)
 
     @staticmethod
-    def verify_coerce(keypath: str, key: str, value: str, blueprint: dict):
+    def verify_coerce(keypath: str, key: str, value: (str, type), blueprint: dict):
         try:
             value = coerces[value]
         except (KeyError, TypeError):
@@ -192,49 +231,60 @@ class DataBlueprint:
         blueprint[key] = value
 
     @staticmethod
-    def verify_enum(keypath: str, key: str, value: tuple, blueprint: dict):
+    def verify_enum(keypath: str, key: str, value: (tuple, list), blueprint: dict):
         if value.__class__ not in (tuple, list):
             x: str = value.__class__.__name__
             raise ge.BlueprintEnumError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': f'Enum type must be a "tuple" or "list", not "{x}".'
+                'msg': f'The "enum" type must be a "tuple" or "list", not "{x}".'
             })
         blueprint[key] = tuple(set(value))
 
     @staticmethod
-    def verify_set(keypath: str, key: str, value: tuple, blueprint: dict):
+    def verify_set(keypath: str, key: str, value: (tuple, list), blueprint: dict):
         if value.__class__ not in (tuple, list):
             x: str = value.__class__.__name__
             raise ge.BlueprintSetError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': f'Set type must be a "tuple" or "list", not "{x}".'
+                'msg': f'The "set" type must be a "tuple" or "list", not "{x}".'
             })
         if len(value) < 2:
             raise ge.BlueprintSetError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': 'Set length must be greater than 1.'
+                'msg': 'The "set" length must be greater than 1.'
             })
         blueprint[key] = tuple(set(value))
 
-    def verify_verify(self, keypath: str, key: str, value, blueprint: dict, *, full_value=None):
-        value_type = value.__class__
+    def verify_verify(
+            self,
+            keypath: str,
+            key: str,
+            value: ('RE object/string', 'Callable object/path_string', tuple, list),
+            blueprint: dict,
+            *,
+            full_value: (tuple, list) = None
+    ):
+        value_type: type = value.__class__
+
         if value_type in (tuple, list) and not full_value:
             blueprint[key] = value_type(self.verify_verify(
-                keypath, key, v, blueprint, full_value=value) for v in value)
+                keypath, key, v, blueprint, full_value=value
+            ) for v in value)
         else:
             if value.__class__ is str:
                 raw_value = value
                 try:
                     path, _, func = value.rpartition('.')
                     value = gimport(path, func)
-                    if not callable(value):
+                    if not (callable(value) and inspect.signature(value).parameters):
                         raise ge.BlueprintVerifyError({
                             'keypath': keypath,
                             'value': full_value or raw_value,
-                            'msg': "It's not callable."
+                            'msg': "Verification function must be callable "
+                                   "and take at least one parameter."
                         })
                 except (ModuleNotFoundError, AttributeError) as e:
                     if re.fullmatch(r'[a-zA-Z_][\w.]+?', value):
@@ -244,23 +294,39 @@ class DataBlueprint:
                             'msg': e
                         })
                     value = re.compile(value)
-            elif value.__class__ is not re.Pattern and not callable(value):
+            elif callable(value):
+                if not inspect.signature(value).parameters:
+                    raise ge.BlueprintVerifyError({
+                        'keypath': keypath,
+                        'value': full_value or value,
+                        'msg': "Verification function must take at least one parameter."
+                    })
+            elif value.__class__ is not re.Pattern:
                 raise ge.BlueprintVerifyError({
                     'keypath': f'{keypath}.{key}',
                     'value': full_value or value,
-                    'msg': 'Unsupported verify.',
-                    'supported_verify': ['Regular Expression', 're.Pattern object',
-                                         'callable object', 'callable object path'],
+                    'msg': 'Unsupported verify mode.',
+                    'supported_verify_mode': [
+                        'Regular Expression', 're.Pattern object',
+                        'callable object', 'callable object path'
+                    ],
                     'hint': 'If you need to define multiple verify, use "tuple" or "list", '
                             '"tuple" will be execute in "and" mode, '
                             '"list" will be execute in "or" mode.',
                 })
+
             if full_value:
                 return value
+
             blueprint[key] = value
 
     @staticmethod
-    def verify_callback(keypath: str, key: str, value, blueprint: dict):
+    def verify_callback(
+            keypath: str,
+            key: str,
+            value: 'Callable object/path_string',
+            blueprint: dict
+    ):
         if value.__class__ is str:
             try:
                 path, _, func = value.rpartition('.')
@@ -275,7 +341,7 @@ class DataBlueprint:
             raise ge.BlueprintCallbackError({
                 'keypath': keypath,
                 'value': value,
-                'msg': 'Not a callable function.'
+                'msg': 'Not a callable object.'
             })
         blueprint[key] = value
 
@@ -314,25 +380,31 @@ class DataValidator:
 
         if branch:
             for key, sub_blueprint in branch.items():
-                err: dict = self.decompose(f'{keypath}.{key}', sub_blueprint, value.get(key, unique), value, key)
+                err: dict = self.decompose(
+                    f'{keypath}.{key}', sub_blueprint,
+                    value.get(key, unique), value, key
+                )
                 if err:
                     return err
         elif items:
             for index, item in enumerate(value):
-                err: dict = self.decompose(f'{keypath}[{index}]', items, item, value, index)
+                err: dict = self.decompose(
+                    f'{keypath}[{index}]', items, item, value, index
+                )
                 if err:
                     return err
 
     def begin_verify(self, keypath: str, blueprint: dict, value, data, key):
-        option, option_bool, env = \
-            blueprint.get('option'), blueprint.get('option_bool'), blueprint.get('env')
+        option:      str  = blueprint.get('option')
+        option_bool: bool = blueprint.get('option_bool')
+        env:         str  = blueprint.get('env')
 
         if option:
-            code, value = self.verify_option(keypath, option, value, data, key)
+            value = self.verify_option(option, data, key)
         elif option_bool or option_bool is False:
-            code, value = self.verify_option_bool(keypath, option_bool, value, data, key)
+            value = self.verify_option_bool(option_bool, data, key)
         elif env:
-            code, value = self.verify_env(keypath, option, value, data, key)
+            value = self.verify_env(option, data, key)
         elif value == unique:
             if 'default' not in blueprint:
                 return 0, {
@@ -348,31 +420,31 @@ class DataValidator:
             except KeyError:
                 continue
             if x:
-                code, value = getattr(self, f'verify_{name}')(keypath, x, value, data, key)
+                code, value = getattr(self, f'verify_{name}')(
+                    keypath, x, value, data, key
+                )
                 if not code:
                     return 0, value
 
         return 1, value
 
     @staticmethod
-    def verify_option(_, option: str, value, data, key) -> tuple:
-        if option is not None:
-            value = data[key] = option
-        return 1, value
-
-    @staticmethod
-    def verify_option_bool(_, option: str, __, data, key) -> tuple:
+    def verify_option(option: str, data, key) -> str:
         value = data[key] = option
-        return 1, value
+        return value
 
     @staticmethod
-    def verify_env(_, env: str, value, data, key) -> tuple:
-        if env is not None:
-            value = data[key] = env
-        return 1, value
+    def verify_option_bool(option: bool, data: dict, key: str) -> bool:
+        value = data[key] = option
+        return value
 
     @staticmethod
-    def verify_type(keypath: str, type_: (type, tuple, list), value, _, __) -> tuple:
+    def verify_env(env: str, data, key) -> str:
+        value = data[key] = env
+        return value
+
+    @staticmethod
+    def verify_type(keypath: str, type_: (type, tuple), value, _, __) -> tuple:
         if not isinstance(value, type_):
             if type_.__class__ in (tuple, list):
                 type_ = type_.__class__(t.__name__ for t in type_)
@@ -391,7 +463,13 @@ class DataValidator:
         return 1, value
 
     @staticmethod
-    def verify_coerce(keypath: str, coerce: type, value, data, key) -> tuple:
+    def verify_coerce(
+            keypath: str,
+            coerce: type,
+            value,
+            data: (dict, list),
+            key: (str, int)
+    ) -> tuple:
         if value.__class__ is not coerce:
             try:
                 value = data[key] = coerce(value)
@@ -406,7 +484,7 @@ class DataValidator:
         return 1, value
 
     @staticmethod
-    def verify_enum(keypath: str, enum: tuple, value, _, __) -> tuple:
+    def verify_enum(keypath: str, enum: (tuple, list), value, _, __) -> tuple:
         if value not in enum:
             return 0, {
                 'title': 'DataEnumError',
@@ -418,7 +496,13 @@ class DataValidator:
         return 1, value
 
     @staticmethod
-    def verify_set(keypath: str, set_: tuple, value, data, key) -> tuple:
+    def verify_set(
+            keypath: str,
+            set_: (tuple, list),
+            value,
+            data: (dict, list),
+            key: (str, int)
+    ) -> tuple:
         if value.__class__ in (list, tuple):
             notfound = [x for x in value if x not in set_]
             if notfound:
@@ -441,10 +525,20 @@ class DataValidator:
             value = data[key] = [value]
         return 1, value
 
-    def verify_verify(self, keypath: str, verify, value, _, __, *, full_verify=None) -> tuple:
+    def verify_verify(
+            self,
+            keypath: str,
+            verify: (re.Pattern, 'A function', list, tuple),
+            value,
+            _, __,
+            *,
+            full_verify: (list, tuple) = None
+    ) -> tuple:
         if verify.__class__ in (list, tuple):
             func = any if verify.__class__ is list else all
-            results = [self.verify_verify(keypath, v, value, _, __, full_verify=verify) for v in verify]
+            results = [self.verify_verify(
+                keypath, v, value, _, __, full_verify=verify
+            ) for v in verify]
             if not func(x[0] for x in results):
                 return 0, {
                     'title': 'DataVerifyError',
@@ -464,19 +558,24 @@ class DataValidator:
                     'verify': full_verify or verify,
                     'msg': 'Value does not match the validation regex.'
                 }
-        else:
-            if not verify(value):
-                return 0, {
-                    'title': 'DataVerifyError',
-                    'keypath': keypath,
-                    'value': value,
-                    'verify': full_verify or verify,
-                    'msg': 'Value verification failed.'
-                }
+        elif not verify(value):
+            return 0, {
+                'title': 'DataVerifyError',
+                'keypath': keypath,
+                'value': value,
+                'verify': full_verify or verify,
+                'msg': 'Value verification failed.'
+            }
         return 1, value
 
     @staticmethod
-    def verify_callback(_, callback, value, data, key) -> tuple:
+    def verify_callback(
+            _,
+            callback: 'A function',
+            value,
+            data: (dict, list),
+            key: (str, int)
+    ) -> tuple:
         value = data[key] = callback(value)
         return 1, value
 
@@ -499,7 +598,8 @@ def getopt(*options, boole: bool = False):
             if value.startswith(opt + '='):
                 if boole:
                     x: str = value.split("=", 1)[0]
-                    raise ge.OptionError(f'''Option "{x}" don't need parameter.''')
+                    raise ge.OptionError(
+                        f'''Option "{x}" don't need parameter.''')
                 return value.split('=', 1)[1]
 
         index -= 1
@@ -517,3 +617,8 @@ def gimport(path: str, attr: str = None, *, define=None):
         if define is not None:
             return define
         raise e
+
+
+verify_method_supported = [
+    x[7:] for x in dir(DataBlueprint) if x[:7] == 'verify_'
+]

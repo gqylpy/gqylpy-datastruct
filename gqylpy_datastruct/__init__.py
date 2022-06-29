@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha6'
+__version__ = 1, 0, 'alpha7'
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
@@ -86,7 +86,7 @@ DataSetError      = e.DataSetError
 DataVerifyError   = e.DataVerifyError
 
 
-class _______G________Q________Y_______L_______P_______Y_______:
+class ______歌______琪______怡______玲______萍______云______:
     import sys
 
     __import__(f'{__name__}.g {__name__[7:]}')
@@ -95,7 +95,9 @@ class _______G________Q________Y_______L_______P_______Y_______:
 
     for gname in globals():
         if gname[0] != '_' and hasattr(gcode, gname):
-            setattr(gpack, gname, getattr(gcode, gname))
+            gfunc = getattr(gcode, gname)
+            gfunc.__module__ = __package__
+            setattr(gpack, gname, gfunc)
 
 
 from typing import Union
