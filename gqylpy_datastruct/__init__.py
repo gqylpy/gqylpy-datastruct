@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha7'
+__version__ = 1, 0, 'alpha8'
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
@@ -46,18 +46,18 @@ class DataBlueprint:
         """
         self.blueprint: dict = verify_blueprint_and_upgrade(blueprint)
 
-    def verify(self, data: dict, *, else_raise: bool = False) -> 'Union[dict, None]':
+    def verify(self, data: dict, *, eraise: bool = False) -> 'Union[dict, None]':
         """
         Verify @param(data) matches @param(self), if the verification process
         detects an error, it immediately terminates and return this error message.
 
         @param data:       Data to be verified.
-        @param else_raise: If true, throws an exception instead of return an error message.
+        @param eraise:     If true, throws an exception instead of return an error message.
         @return:           Error message or None.
         """
         err: dict = DataValidator(data, self)
         if err:
-            if else_raise:
+            if eraise:
                 raise e[err.pop('title')](err)
             return err
 
