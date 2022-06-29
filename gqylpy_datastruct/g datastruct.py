@@ -57,15 +57,14 @@ coerces_supported = [i.__name__ for i in coerces_supported]
 types_supported = [i.__name__ for i in types_supported]
 
 
-class DataBlueprint:
+class DataStruct:
 
     def __init__(self, blueprint: dict):
         if blueprint.__class__ is not dict:
             x: str = blueprint.__class__.__name__
-            raise ge.BlueprintTypeError(
+            raise ge.BlueprintStructureError(
                 f'Blueprint type must be a "dict", not "{x}".'
             )
-
         self.blueprint: dict = copy.deepcopy(blueprint)
 
         for key, sub_blueprint in self.blueprint.items():
@@ -82,10 +81,14 @@ class DataBlueprint:
                 'msg': f'Blueprint structure must be defined using "dict", not "{x}".'
             })
 
-        branch, items = blueprint.get('branch'), blueprint.get('items')
-
         for key, value in blueprint.items():
             if key not in ('branch', 'items', 'default') and value:
+                if blueprint.get('option') and blueprint.get('option_bool'):
+                    raise ge.BlueprintStructureError({
+                        'keypath': keypath,
+                        'msg': 'Verification method "option" and '
+                               '"option_bool" cannot exist together.'
+                    })
                 try:
                     verify_func: Callable = getattr(self, f'verify_{key}')
                 except AttributeError:
@@ -96,6 +99,9 @@ class DataBlueprint:
                         'supported_verify_method': verify_method_supported
                     })
                 verify_func(keypath, key, value, blueprint)
+
+        branch: dict = blueprint.get('branch')
+        items:  dict = blueprint.get('items')
 
         if branch and items:
             raise ge.BlueprintLimbError({
@@ -115,7 +121,7 @@ class DataBlueprint:
     def check_limb(keypath: str, limb: dict, name: str, blueprint: dict):
         if limb.__class__ is not dict:
             x: str = limb.__class__.__name__
-            raise ge[f'Blueprint{name.title()}Error']({
+            raise ge.BlueprintStructureError({
                 'title': f'Blueprint{name.title()}DefineError',
                 'keypath': keypath,
                 'msg': f'"{name}" type must be a "dict", not "{x}".',
@@ -128,7 +134,7 @@ class DataBlueprint:
 
         if notdefine:
             x: str = f'"{notdefine[0]}"' if len(notdefine) == 1 else notdefine
-            raise ge.BlueprintLimbError({
+            raise ge.BlueprintStructureError({
                 'keypath': keypath,
                 'msg': f'Limb can not define {x}.'
             })
@@ -184,7 +190,7 @@ class DataBlueprint:
                 )
         elif value.__class__ is not str:
             x: str = value.__class__.__name__
-            raise ge.BlueprintOptionError({
+            raise ge[f'BlueprintOption{"Bool" if boole else ""}Error']({
                 'keypath': f'{keypath}.{key}',
                 'value': full_value or value,
                 'msg': f'Option type must be a "str", not "{x}".',
@@ -369,16 +375,17 @@ class DataBlueprint:
 
 class DataValidator:
 
-    def __init__(self, data: dict, blueprint: DataBlueprint):
+    def __init__(self, data: dict, datastruct: DataStruct):
         if not isinstance(data, dict):
             x: str = data.__class__.__name__
-            raise ge.DataTypeError(f'Data type must be a "dict", not "{x}".')
-
+            raise ge.DataStructureError(
+                f'Data type must be a "dict", not "{x}".'
+            )
         self.data = data
-        self.blueprint = blueprint
+        self.datastruct = datastruct
 
     def verify(self, *, eraise: bool = False):
-        for key, sub_blueprint in self.blueprint.blueprint.items():
+        for key, sub_blueprint in self.datastruct.blueprint.items():
             err: dict = self.disassemble(
                 keypath=key,
                 blueprint=sub_blueprint,
@@ -664,5 +671,5 @@ def gimport(path: str, attr: str = None, *, define=None) -> Any:
 
 
 verify_method_supported = [
-    x[7:] for x in dir(DataBlueprint) if x[:7] == 'verify_'
+    x[7:] for x in dir(DataStruct) if x[:7] == 'verify_'
 ]

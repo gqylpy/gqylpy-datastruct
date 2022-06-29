@@ -27,12 +27,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha8'
+__version__ = 1, 0, 'alpha9'
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
 
-class DataBlueprint:
+class DataStruct:
 
     def __init__(self, blueprint: dict):
         """
@@ -55,35 +55,33 @@ class DataBlueprint:
         @param eraise:     If true, throws an exception instead of return an error message.
         @return:           Error message or None.
         """
-        err: dict = DataValidator(data, self)
+        err: dict = verify(data, self)
         if err:
             if eraise:
                 raise e[err.pop('title')](err)
             return err
 
 
-import gqylpy_exception as e
+from gqylpy_exception import (
+    BlueprintStructureError,
+    BlueprintVerifyMethodError,
+    BlueprintTypeError,
+    BlueprintOptionError,
+    BlueprintOptionBoolError,
+    BlueprintENVError,
+    BlueprintCoerceError,
+    BlueprintEnumError,
+    BlueprintSetError,
+    BlueprintVerifyError,
+    BlueprintCallbackError,
 
-BlueprintTypeError         = e.BlueprintTypeError
-BlueprintLimbError         = e.BlueprintLimbError
-BlueprintStructureError    = e.BlueprintStructureError
-BlueprintVerifyMethodError = e.BlueprintVerifyMethodError
-BlueprintBranchDefineError = e.BlueprintBranchDefineError
-BlueprintItemsDefineError  = e.BlueprintItemsDefineError
-BlueprintOptionError       = e.BlueprintOptionError
-BlueprintENVError          = e.BlueprintENVError
-BlueprintCoerceError       = e.BlueprintCoerceError
-BlueprintEnumError         = e.BlueprintEnumError
-BlueprintSetError          = e.BlueprintSetError
-BlueprintVerifyError       = e.BlueprintVerifyError
-BlueprintCallbackError     = e.BlueprintCallbackError
-
-DataTypeError     = e.DataTypeError
-DataNotFoundError = e.DataNotFoundError
-DataCoerceError   = e.DataCoerceError
-DataEnumError     = e.DataEnumError
-DataSetError      = e.DataSetError
-DataVerifyError   = e.DataVerifyError
+    DataNotFoundError,
+    DataTypeError,
+    DataCoerceError,
+    DataEnumError,
+    DataSetError,
+    DataVerifyError
+)
 
 
 class ______歌______琪______怡______玲______萍______云______:
