@@ -104,7 +104,7 @@ class DataStruct:
         items:  dict = blueprint.get('items')
 
         if branch and items:
-            raise ge.BlueprintLimbError({
+            raise ge.BlueprintStructureError({
                 'keypath': keypath,
                 'msg': '"branch" and "items" cannot exist together.'
             })

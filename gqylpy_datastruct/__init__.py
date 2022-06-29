@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha9'
+__version__ = 1, 0, 'alpha10'
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
@@ -44,7 +44,7 @@ class DataStruct:
         Value priority:
             option > env > value > default
         """
-        self.blueprint: dict = verify_blueprint_and_upgrade(blueprint)
+        self.blueprint: dict = copy.deepcopy(blueprint)
 
     def verify(self, data: dict, *, eraise: bool = False) -> 'Union[dict, None]':
         """
@@ -56,11 +56,11 @@ class DataStruct:
         @return:           Error message or None.
         """
         err: dict = verify(data, self)
-        if err:
-            if eraise:
-                raise e[err.pop('title')](err)
-            return err
 
+        if err and eraise:
+            raise e[err.pop('title')](err)
+
+        return err
 
 from gqylpy_exception import (
     BlueprintStructureError,
