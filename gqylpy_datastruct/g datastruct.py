@@ -36,12 +36,12 @@ import datetime as dt
 
 import gqylpy_exception as ge
 
-from typing import Union, Callable, Any
+from typing import Union, Callable, NoReturn, Any
 
 unique = 'gqylpy-d82644a2db26dbd60b039c79d'
 
-coerces_supported = int, str, list, tuple, set, dict, bool
-types_supported = coerces_supported + (dt.date, dt.time, dt.datetime)
+coerces_supported = int, float, str, bytes, list, tuple, set, dict, bool
+types_supported = coerces_supported + (type(None), dt.date, dt.time, dt.datetime)
 
 coerces = {}
 for i in coerces_supported:
@@ -70,7 +70,7 @@ class DataStruct:
         for key, sub_blueprint in self.blueprint.items():
             self.disassemble(key, sub_blueprint)
 
-    def verify(self, data: dict, *, eraise: bool = False):
+    def verify(self, data: dict, *, eraise: bool = False) -> Union[dict, NoReturn]:
         return DataValidator(data, self).verify(eraise=eraise)
 
     def disassemble(self, keypath: str, blueprint: dict):
@@ -153,16 +153,19 @@ class DataStruct:
                 keypath, key, v, blueprint, full_value=value
             ) for v in value)
         else:
+            if value.__class__ is str:
+                value: str = value.strip()
             try:
                 value: type = types[value]
             except (KeyError, TypeError):
-                value: Union[str, tuple, list] = full_value.__class__(
+                value: str = getattr(value, '__name__', value)
+                full_value: Union[str, tuple, list] = full_value.__class__(
                     getattr(x, '__name__', x) for x in full_value
-                ) if full_value else getattr(value, '__name__', value)
+                ) if full_value else value
                 raise ge.BlueprintTypeError({
                     'keypath': f'{keypath}.{key}',
-                    'value': value,
-                    'msg': f'Unsupported type.',
+                    'value': full_value,
+                    'msg': f'Unsupported type "{value}".',
                     'supported_types': types_supported,
                     'hint': 'If you need to define multiple types, use "tuple" or "list".'
                 })
@@ -185,10 +188,11 @@ class DataStruct:
         if value.__class__ in (tuple, list) and not full_value:
             for v in value:
                 self.verify_option(
-                    keypath, key, v, blueprint,
-                    full_value=value, boole=boole
+                    keypath, key, v, blueprint, full_value=value, boole=boole
                 )
-        elif value.__class__ is not str:
+        elif value.__class__ is str:
+            value: str = value.strip()
+        else:
             x: str = value.__class__.__name__
             raise ge[f'BlueprintOption{"Bool" if boole else ""}Error']({
                 'keypath': f'{keypath}.{key}',
@@ -234,6 +238,8 @@ class DataStruct:
             value:     Union[str, type],
             blueprint: dict
     ):
+        if value.__class__ is str:
+            value: str = value.strip()
         try:
             value: type = coerces[value]
         except (KeyError, TypeError):
@@ -384,7 +390,7 @@ class DataValidator:
         self.data = data
         self.datastruct = datastruct
 
-    def verify(self, *, eraise: bool = False):
+    def verify(self, *, eraise: bool = False) -> Union[dict, NoReturn]:
         for key, sub_blueprint in self.datastruct.blueprint.items():
             err: dict = self.disassemble(
                 keypath=key,
@@ -405,7 +411,7 @@ class DataValidator:
             value:     Any,
             data:      Union[dict, list],
             key:       Union[str, int]
-    ):
+    ) -> Union[dict, NoReturn]:
         option:      str  = blueprint.get('option')
         option_bool: bool = blueprint.get('option_bool')
         env:         str  = blueprint.get('env')
@@ -415,7 +421,7 @@ class DataValidator:
         elif option_bool or option_bool is False:
             value: bool = self.verify_option_bool(option_bool, data, key)
         elif env:
-            value: str = self.verify_env(option, data, key)
+            value: str = self.verify_env(env, data, key)
         elif value == unique:
             if 'default' not in blueprint:
                 return {
@@ -529,7 +535,7 @@ class DataValidator:
                 'keypath': keypath,
                 'value': value,
                 'enum': enum,
-                'msg': 'Value not in enum.'
+                'msg': f'"{value}" is not in enum.'
             }
         return 1, value
 
@@ -544,12 +550,14 @@ class DataValidator:
         if value.__class__ in (list, tuple):
             notfound = [x for x in value if x not in set_]
             if notfound:
+                x: Any = notfound[0] if len(notfound) == 1 \
+                    else ','.join(notfound)
                 return 0, {
                     'title': 'DataSetError',
                     'keypath': keypath,
                     'value': value,
                     'set': set_,
-                    'msg': f'{notfound} not in set.'
+                    'msg': f'There is no "{x}" in set.'
                 }
         else:
             if value not in set_:
@@ -558,7 +566,7 @@ class DataValidator:
                     'keypath': keypath,
                     'value': value,
                     'set': set_,
-                    'msg': 'Value not in set.'
+                    'msg': f'"{value}" is not in set.'
                 }
             value = data[key] = [value]
         return 1, value
@@ -631,7 +639,7 @@ def delete_repeated(data: list):
         index -= 1
 
 
-def getopt(*options, boole: bool = False) -> Union[str, bool, None]:
+def getopt(*options, boole: bool = False) -> Union[str, bool, NoReturn]:
     args:  list = sys.argv[1:]
     index: int  = len(args) - 1
 

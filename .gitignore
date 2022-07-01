@@ -107,4 +107,3 @@ conda-requirements.txt
 
 changelog.yml
 self_test.py
-*.json

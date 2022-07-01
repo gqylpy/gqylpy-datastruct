@@ -1,82 +1,55 @@
-import base64
+import os
 import sys
+import base64
 
-from gqylpy_datastruct import DataBlueprint
+from gqylpy_datastruct import DataStruct
 
-blueprint = {
+data = {
+    'mysql': {
+        'host': 'gqylpy.com',
+        'port': 3306,
+        'db': 'gqylpy',
+        'username': 'gqylpy',
+        'password': '5pS55Y+Y5LiW55WM44CC',
+    },
+    'nodeInfo': [
+        {'ip': '172.17.1.2', 'rules': ['master', 'node'], 'type': 'vm'},
+        {'ip': '172.17.1.3', 'rules': 'node', 'type': 'host'},
+        {'ip': '172.17.1.4', 'rules': 'node', 'type': 'host'}
+    ]
+}
+
+
+data_blueprint = {
     'mysql': {
         'type': dict,
         'branch': {
-            'host': {'type': str, 'default': 'isddc-mysql', 'env': 'MYSQL_HOST'},
-            'port': {'type': (int, str), 'default': 3306, 'coerce': int, 'env': 'MYSQL_PORT'},
-            'db': {'type': str, 'default': 'isddc', 'env': 'MYSQL_DB'},
-            'username': {'type': str, 'default': 'isddc', 'env': 'MYSQL_USERNAME'},
-            'password': {'type': str, 'env': 'MYSQL_PASSWORD', 'callback': lambda x: base64.b64decode(x).decode()},
+            'host': {'type': str, 'verify': [r'\d+\.\d+\.\d+\.\d+', r'([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}']},
+            'port': {'type': (int, str), 'coerce': int, 'verify': lambda x: 0 < x < 65536},
+            'db': {'type': str},
             'charset': {'type': str, 'default': 'utf8'},
+            'username': {'type': str},
+            'password': {'type': str, 'callback': lambda x: base64.b64decode(x).decode()},
+            'autocommit': {'type': bool, 'coerce': bool, 'default': False, 'option_bool': '--mysql:autocommit'},
         }
     },
-    'nodeList': {
-        'type': 'list',
+    'nodeInfo': {
+        'type': list,
         'items': {
             'type': dict,
             'branch': {
-                'address': {'type': 'str', 'verify': ['\d+\.\d+\.\d+\.\d+', '([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}']},
-                'username': {'type': 'str', 'default': 'root'},
-                'password': {'type': 'str', 'callback': lambda x: base64.b64decode(x).decode()},
-                'rules': {'type': ('list', 'str'), 'set': ('master', 'node')},
-                'type': {'type': 'str', 'default': 'host', 'enum': ('host', 'vm')}
-            }
+                'ip': {'type': str, 'verify': r'\d+\.\d+\.\d+\.\d+'},
+                'rules': {'type': (str, list), 'set': ('master', 'node')},
+                'type': {'type': str, 'enum': ('host', 'vm')}
+            },
         }
-    },
-    'timeout': {
-        'type': ('int', 'str'),
-        'default': 15,
-        'coerce': 'int',
-        # 'option': '--timeout',
-    },
-    'flag': {
-        'type': (str, bool),
-        # 'default': False,
-        'coerce': bool,
-        'option': '--flag',
     }
 }
-data = {
-    'mysql': {
-        'host': 'isddc-mysql',
-        'port': '3306',
-        'db': 'mon',
-        'username': 'isddc',
-        'password': 'cGFzc0B3MHJk',
-    },
-    'nodeList': [
-        {
-            'address': 'dev.isddc.com',
-            'username': 'root',
-            'password': 'cGFzc0B3MHJk',
-            'rules': ['master', 'node'],
-            'type': 'vm'
-        },
-        {
-            'address': '192.168.1.11',
-            'username': 'root',
-            'password': 'cGFzc0B3MHJk',
-            'rules': 'node'
-        },
-        {
-            'address': '192.168.1.12',
-            'username': 'root',
-            'password': 'cGFzc0B3MHJk',
-            'rules': 'node'
-        }
-    ]
-}
-sys.argv.append('--flag')
-datastruct = DataBlueprint(blueprint)
-err: dict = datastruct.verify(data)
 
-print(err or data)
+# branch, items, type, coerce, default, env:, option:, option_bool, enum, set, verify, callback
 
-import json
-with open('data.json', 'w', encoding='utf8') as f:
-    json.dump(data, f)
+sys.argv.extend(['--mysql:autocommit'])
+
+datastruct = DataStruct(data_blueprint)
+datastruct.verify(data, eraise=True)
+print(data)
