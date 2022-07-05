@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha11'
+__version__ = 1, 0, 'alpha12'
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
@@ -36,53 +36,25 @@ class DataStruct:
 
     def __init__(self, blueprint: dict):
         """
-        Define a data blueprint, see the example in __main__ below.
-
-        Supported methods and order of execution:
-            default, env, option, type, coerce, enum, set, verify, callback
-
-        Value priority:
-            option > env > value > default
+        @param blueprint:
+            Receive a data blueprint.
+            See the documentation at https://github.com/gqylpy/gqylpy-datastruct.
+            We provide an example in https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py
         """
         self.blueprint: dict = verify_and_upgrade(blueprint)
 
     def verify(self, data: dict, *, eraise: bool = False) -> 'Union[dict, NoReturn]':
         """
-        Verify @param(data) matches @param(self), if the verification process
-        detects an error, it immediately terminates and return this error message.
-
         @param data:       Data to be verified.
-        @param eraise:     If true, throws an exception instead of return an error message.
-        @return:           Error message or None.
+        @param eraise:     If true, an exception will be thrown if the verification fails.
+        @return:           An error message, if the verification fails and parameter "eraise" is false.
         """
-        err: Union[dict, NoReturn] = verify(data, self)
+        err: Union[dict, NoneType] = verify(data, self)
 
         if err and eraise:
             raise e[err.pop('title')](err)
 
         return err
-
-
-from gqylpy_exception import (
-    BlueprintStructureError,
-    BlueprintVerifyMethodError,
-    BlueprintTypeError,
-    BlueprintOptionError,
-    BlueprintOptionBoolError,
-    BlueprintENVError,
-    BlueprintCoerceError,
-    BlueprintEnumError,
-    BlueprintSetError,
-    BlueprintVerifyError,
-    BlueprintCallbackError,
-
-    DataNotFoundError,
-    DataTypeError,
-    DataCoerceError,
-    DataEnumError,
-    DataSetError,
-    DataVerifyError
-)
 
 
 class ______歌______琪______怡______玲______萍______云______:
@@ -99,4 +71,5 @@ class ______歌______琪______怡______玲______萍______云______:
             setattr(gpack, gname, gfunc)
 
 
+from types import NoneType
 from typing import Union, NoReturn

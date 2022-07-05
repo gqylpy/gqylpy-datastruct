@@ -319,7 +319,7 @@ class DataStruct:
                             'msg': 'Verification function must be callable '
                                    'and take at least one parameter.'
                         })
-                except (ModuleNotFoundError, AttributeError) as e:
+                except (ModuleNotFoundError, AttributeError, ValueError) as e:
                     if re.fullmatch(r'[a-zA-Z_][\w.]+?', value):
                         raise ge.BlueprintVerifyError({
                             'keypath': f'{keypath}.{key}',
@@ -364,7 +364,7 @@ class DataStruct:
             try:
                 path, _, func = value.rpartition('.')
                 value: Callable = gimport(path, func)
-            except (ModuleNotFoundError, AttributeError) as e:
+            except (ModuleNotFoundError, AttributeError, ValueError) as e:
                 raise ge.BlueprintCallbackError({
                     'keypath': keypath,
                     'value': value,
@@ -596,6 +596,8 @@ class DataValidator:
                             '"list" will be execute in "or" mode.'
                 }
         elif verify.__class__ is re.Pattern:
+            if value.__class__ in (int, float):
+                value = str(value)
             if not verify.fullmatch(value):
                 return 0, {
                     'title': 'DataVerifyError',
@@ -672,7 +674,7 @@ def gimport(path: str, attr: str = None, *, define=None) -> Any:
         __import__(path)
         module_ = sys.modules[path]
         return getattr(module_, attr) if attr else module_
-    except (ModuleNotFoundError, AttributeError) as e:
+    except (ValueError, ModuleNotFoundError, AttributeError) as e:
         if define is not None:
             return define
         raise e

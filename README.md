@@ -6,5 +6,6 @@
 
 # gqylpy-datastruct
 
+> 数据校验，定义一张数据蓝图，之后你可使用它来校验数据是否符合蓝图定义。
 
-> 
+<kbd>pip3 install gqylpy_datastruct</kbd>
