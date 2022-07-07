@@ -148,7 +148,12 @@ class DataStruct:
             *,
             full_value: Union[tuple, list] = None
     ):
+        # if 'set' in blueprint and not full_value:
+        #     print(keypath, blueprint)
         if value.__class__ in (tuple, list) and not full_value:
+            if value.__class__ is tuple:
+                value: list = list(value)
+            delete_repeated(value)
             blueprint[key] = tuple(self.verify_type(
                 keypath, key, v, blueprint, full_value=value
             ) for v in value)
@@ -258,7 +263,9 @@ class DataStruct:
             value:     Union[tuple, list],
             blueprint: dict
     ):
-        if value.__class__ not in (tuple, list):
+        if value.__class__ is tuple:
+            value = list(value)
+        elif value.__class__ is not list:
             x: str = value.__class__.__name__
             raise ge.BlueprintEnumError({
                 'keypath': f'{keypath}.{key}',
@@ -275,7 +282,9 @@ class DataStruct:
             value:     Union[tuple, list],
             blueprint: dict
     ):
-        if value.__class__ not in (tuple, list):
+        if value.__class__ is tuple:
+            value = list(value)
+        elif value.__class__ is not list:
             x: str = value.__class__.__name__
             raise ge.BlueprintSetError({
                 'keypath': f'{keypath}.{key}',
@@ -288,6 +297,7 @@ class DataStruct:
                 'value': value,
                 'msg': 'The "set" length must be greater than 1.'
             })
+
         delete_repeated(value)
         blueprint[key] = value
 
@@ -603,8 +613,9 @@ class DataValidator:
                     'title': 'DataVerifyError',
                     'keypath': keypath,
                     'value': value,
-                    'verify': full_verify or verify,
-                    'msg': 'Value does not match the validation regex.'
+                    'verify': full_verify or verify.pattern,
+                    'msg': f'Value "{value}" does not match the '
+                           f'validation regular "{verify.pattern}".'
                 }
         elif not verify(value):
             return 0, {

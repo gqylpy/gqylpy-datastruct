@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha12'
+__version__ = 1, 0, 'alpha13'
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
@@ -45,9 +45,9 @@ class DataStruct:
 
     def verify(self, data: dict, *, eraise: bool = False) -> 'Union[dict, NoReturn]':
         """
-        @param data:       Data to be verified.
-        @param eraise:     If true, an exception will be thrown if the verification fails.
-        @return:           An error message, if the verification fails and parameter "eraise" is false.
+        @param data:   Data to be verified.
+        @param eraise: If true, an exception will be thrown if the verification fails.
+        @return:       An error message, if the verification fails and parameter "eraise" is false.
         """
         err: Union[dict, NoneType] = verify(data, self)
 
@@ -60,9 +60,9 @@ class DataStruct:
 class ______歌______琪______怡______玲______萍______云______:
     import sys
 
-    __import__(f'{__name__}.g {__name__[7:]}')
+    __import__(f'{__name__}.{__name__[0]} {__name__[7:]}')
     gpack = sys.modules[__name__]
-    gcode = globals()[f'g {__name__[7:]}']
+    gcode = globals()[f'{__name__[0]} {__name__[7:]}']
 
     for gname in globals():
         if gname[0] != '_' and hasattr(gcode, gname):
