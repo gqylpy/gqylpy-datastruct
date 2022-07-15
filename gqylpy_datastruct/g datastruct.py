@@ -30,7 +30,6 @@ limitations under the License.
 import os
 import re
 import sys
-import copy
 import inspect
 import datetime as dt
 
@@ -65,24 +64,32 @@ class DataStruct:
             raise ge.BlueprintStructureError(
                 f'Blueprint type must be a "dict", not "{x}".'
             )
-        self.blueprint: dict = copy.deepcopy(blueprint)
 
-        for key, sub_blueprint in self.blueprint.items():
-            self.disassemble(key, sub_blueprint)
+        for key, sub_blueprint in blueprint.items():
+            self.disassemble(key, sub_blueprint, blueprint, key)
+
+        self.blueprint = blueprint
 
     def verify(self, data: dict, *, eraise: bool = False) -> Union[dict, NoReturn]:
-        return DataValidator(data, self).verify(eraise=eraise)
+        return DataValidator(data, self.blueprint).verify(eraise=eraise)
 
-    def disassemble(self, keypath: str, blueprint: dict):
+    def disassemble(self, keypath: str, blueprint: dict, sup_blueprint: dict, sup_key: str):
         if blueprint.__class__ is not dict:
+            if blueprint in (None, ...):
+                sup_blueprint[sup_key] = {}
+                return
             x: str = blueprint.__class__.__name__
             raise ge.BlueprintStructureError({
                 'keypath': keypath,
                 'msg': f'Blueprint structure must be defined using "dict", not "{x}".'
             })
 
+        for keywork_special in (type, set):
+            if keywork_special in blueprint:
+                blueprint[keywork_special.__name__] = blueprint.pop(keywork_special)
+
         for key, value in blueprint.items():
-            if key not in ('branch', 'items', 'default') and value:
+            if not(key in ('branch', 'items', 'default') or value in (None, ..., '')):
                 if blueprint.get('option') and blueprint.get('option_bool'):
                     raise ge.BlueprintStructureError({
                         'keypath': keypath,
@@ -112,10 +119,10 @@ class DataStruct:
         if branch:
             self.check_limb(keypath, branch, 'branch', blueprint)
             for key, sub_blueprint in branch.items():
-                self.disassemble(f'{keypath}.branch.{key}', sub_blueprint)
+                self.disassemble(f'{keypath}.branch.{key}', sub_blueprint, branch, key)
         elif items:
             self.check_limb(keypath, items, 'items', blueprint)
-            self.disassemble(f'{keypath}.items', items)
+            self.disassemble(f'{keypath}.items', items, items, sup_key)
 
     @staticmethod
     def check_limb(keypath: str, limb: dict, name: str, blueprint: dict):
@@ -148,8 +155,6 @@ class DataStruct:
             *,
             full_value: Union[tuple, list] = None
     ):
-        # if 'set' in blueprint and not full_value:
-        #     print(keypath, blueprint)
         if value.__class__ in (tuple, list) and not full_value:
             if value.__class__ is tuple:
                 value: list = list(value)
@@ -391,17 +396,17 @@ class DataStruct:
 
 class DataValidator:
 
-    def __init__(self, data: dict, datastruct: DataStruct):
+    def __init__(self, data: dict, blueprint: dict):
         if not isinstance(data, dict):
             x: str = data.__class__.__name__
             raise ge.DataStructureError(
                 f'Data type must be a "dict", not "{x}".'
             )
         self.data = data
-        self.datastruct = datastruct
+        self.blueprint = blueprint
 
     def verify(self, *, eraise: bool = False) -> Union[dict, NoReturn]:
-        for key, sub_blueprint in self.datastruct.blueprint.items():
+        for key, sub_blueprint in self.blueprint.items():
             err: dict = self.disassemble(
                 keypath=key,
                 blueprint=sub_blueprint,
@@ -446,7 +451,7 @@ class DataValidator:
                 x: Any = blueprint[name]
             except KeyError:
                 continue
-            if x:
+            if x not in (None, ..., ''):
                 code, value = getattr(self, f'verify_{name}')(
                     keypath, x, value, data, key
                 )
@@ -591,11 +596,11 @@ class DataValidator:
             full_verify: Union[list, tuple] = None
     ) -> tuple:
         if verify.__class__ in (list, tuple):
-            func = any if verify.__class__ is list else all
+            mode = any if verify.__class__ is list else all
             results = [self.verify_verify(
                 keypath, v, value, _, __, full_verify=verify
             ) for v in verify]
-            if not func(x[0] for x in results):
+            if not mode(x[0] for x in results):
                 return 0, {
                     'title': 'DataVerifyError',
                     'keypath': keypath,
@@ -608,7 +613,17 @@ class DataValidator:
         elif verify.__class__ is re.Pattern:
             if value.__class__ in (int, float):
                 value = str(value)
-            if not verify.fullmatch(value):
+            try:
+                result = verify.search(value)
+            except TypeError as e:
+                return 0, {
+                    'title': 'DataVerifyError',
+                    'keypath': keypath,
+                    'value': value,
+                    'verify': full_verify or verify.pattern,
+                    'msg': str(e)
+                }
+            if not result:
                 return 0, {
                     'title': 'DataVerifyError',
                     'keypath': keypath,

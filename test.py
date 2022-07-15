@@ -7,15 +7,15 @@ from gqylpy_datastruct import DataStruct
 
 blueprint = {
     'mysql': {
-        'type': dict,
+        type: dict,
         'branch': {
-            'host': {'type': str, 'verify': [r'\d+\.\d+\.\d+\.\d+', r'([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}']},
-            'port': {'type': (int, str), 'coerce': int, 'verify': lambda x: 0 < x < 65536},
-            'db': {'type': str},
-            'charset': {'type': str, 'default': 'utf8'},
-            'username': {'type': str, 'env': 'MYSQL_USERNAME'},
-            'password': {'type': str, 'option': '--mysql:password', 'callback': lambda x: base64.b64decode(x).decode()},
-            'autocommit': {'type': bool, 'coerce': bool, 'option_bool': '--mysql:autocommit'}
+            'host': {type: str, 'verify': [r'\d+\.\d+\.\d+\.\d+', r'([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}']},
+            'port': {type: (int, str), 'coerce': int, 'verify': lambda x: 0 < x < 65536},
+            'db': {type: str},
+            'charset': {type: str, 'default': 'utf8'},
+            'username': {type: str, 'env': 'MYSQL_USERNAME'},
+            'password': {type: str, 'option': '--mysql:password', 'callback': lambda x: base64.b64decode(x).decode()},
+            'autocommit': {type: bool, 'coerce': bool, 'option_bool': '--mysql:autocommit'}
         }
     },
     'nodes': {
@@ -23,7 +23,7 @@ blueprint = {
         'items': {
             'type': 'dict',
             'branch': {
-                'ip': {'type': 'str', 'verify': r'\d+\.\d+\.\d+\.\d+'},
+                'ip': {'type': 'str', 'verify': r'^\d+\.\d+\.\d+\.\d+$'},
                 'rules': {'type': ('str', 'list'), 'set': ('master', 'node')},
                 'type': {'type': 'str', 'enum': ('host', 'vm')}
             }
