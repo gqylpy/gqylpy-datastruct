@@ -73,7 +73,13 @@ class DataStruct:
     def verify(self, data: dict, *, eraise: bool = False) -> Union[dict, NoReturn]:
         return DataValidator(data, self.blueprint).verify(eraise=eraise)
 
-    def disassemble(self, keypath: str, blueprint: dict, sup_blueprint: dict, sup_key: str):
+    def disassemble(
+            self,
+            keypath:       str,
+            blueprint:     dict,
+            sup_blueprint: dict,
+            sup_key:       str
+    ):
         if blueprint.__class__ is not dict:
             if blueprint in (None, ...):
                 sup_blueprint[sup_key] = {}
@@ -107,8 +113,8 @@ class DataStruct:
                     })
                 verify_func(keypath, key, value, blueprint)
 
-        branch: dict = blueprint.get('branch')
-        items:  dict = blueprint.get('items')
+        branch: dict = self.get_limb_and_verify(keypath, blueprint, 'branch')
+        items: dict = self.get_limb_and_verify(keypath, blueprint, 'items')
 
         if branch and items:
             raise ge.BlueprintStructureError({
@@ -117,22 +123,33 @@ class DataStruct:
             })
 
         if branch:
-            self.check_limb(keypath, branch, 'branch', blueprint)
             for key, sub_blueprint in branch.items():
                 self.disassemble(f'{keypath}.branch.{key}', sub_blueprint, branch, key)
         elif items:
-            self.check_limb(keypath, items, 'items', blueprint)
             self.disassemble(f'{keypath}.items', items, items, sup_key)
 
     @staticmethod
-    def check_limb(keypath: str, limb: dict, name: str, blueprint: dict):
+    def get_limb_and_verify(
+            keypath:   str,
+            blueprint: dict,
+            limbtype:  str
+    ) -> Union[dict, NoReturn]:
+        try:
+            limb: dict = blueprint[limbtype]
+        except KeyError:
+            return
+
+        if limb in ({}, None, ...):
+            del blueprint[limbtype]
+            return
+
         if limb.__class__ is not dict:
             x: str = limb.__class__.__name__
             raise ge.BlueprintStructureError({
-                'title': f'Blueprint{name.title()}DefineError',
+                'title': f'Blueprint{limbtype.title()}DefineError',
                 'keypath': keypath,
-                'msg': f'"{name}" type must be a "dict", not "{x}".',
-                name: limb
+                'msg': f'"{limbtype}" type must be a "dict", not "{x}".',
+                limbtype: limb
             })
 
         notdefine = [x for x in (
@@ -145,6 +162,8 @@ class DataStruct:
                 'keypath': keypath,
                 'msg': f'Limb can not define {x}.'
             })
+
+        return limb
 
     def verify_type(
             self,

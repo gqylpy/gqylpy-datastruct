@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0, 'alpha14'
+__version__ = 1, 0, 'alpha15'
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
@@ -38,7 +38,7 @@ class DataStruct:
         """
         @param blueprint:
             Receive a data blueprint.
-            See the documentation at https://github.com/gqylpy/gqylpy-datastruct.
+            See the documentation at https://github.com/gqylpy/gqylpy-datastruct
             We provide an example in https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py
         """
         verify_and_upgrade(blueprint)
@@ -50,7 +50,7 @@ class DataStruct:
         @param eraise: If true, an exception will be thrown if the verification fails.
         @return:       An error message, if the verification fails and parameter "eraise" is false.
         """
-        err: Union[dict, NoneType] = verify(data, self)
+        err: Union[dict, NoneType] = verify(data, self.blueprint)
 
         if err and eraise:
             raise e[err.pop('title')](err)
