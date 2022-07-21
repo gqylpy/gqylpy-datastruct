@@ -42,7 +42,7 @@ class DataStruct:
             We provide an example in https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py
         """
         verify_and_upgrade(blueprint)
-        self.blueprint: dict = blueprint
+        self.blueprint = blueprint
 
     def verify(self, data: dict, *, eraise: bool = False) -> 'Union[dict, NoReturn]':
         """
@@ -53,7 +53,7 @@ class DataStruct:
         err: Union[dict, NoneType] = verify(data, self.blueprint)
 
         if err and eraise:
-            raise e[err.pop('title')](err)
+            raise ge[err.pop('title')](err)
 
         return err
 
@@ -72,5 +72,6 @@ class ______歌______琪______怡______玲______萍______云______:
             setattr(gpack, gname, gfunc)
 
 
+import gqylpy_exception as ge
 from types import NoneType
 from typing import Union, NoReturn
