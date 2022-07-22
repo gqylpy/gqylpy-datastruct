@@ -37,7 +37,7 @@ import gqylpy_exception as ge
 
 from typing import Union, Callable, NoReturn, Any
 
-unique = 'gqylpy-d82644a2db26dbd60b039c79d'
+unique = b'GQYLPY, \xe6\x94\xb9\xe5\x8f\x98\xe4\xb8\x96\xe7\x95\x8c\xe3\x80\x82'
 
 coerces_supported = int, float, str, bytes, list, tuple, set, dict, bool
 types_supported = coerces_supported + (type(None), dt.date, dt.time, dt.datetime)
