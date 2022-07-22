@@ -23,7 +23,7 @@ err = datastruct.verify({'name': 'Alpha'})
 ，运用了该框架的大部分功能，阅读此文档必看此示例。
 
 在获得 `DataStruct` 实例时传入蓝图，同时会校验蓝图，根据蓝图中定义 `key` 的顺序，从前往后，由浅入深进行校验，蓝图
-`{a: {b: {c: ...}}, d: {e: ...}}` 的校验顺序是 `a` `a.b` `a.b.c` `d` `d.e`。校验后将蓝图对象存入属性 
+`{a: {b: {c: ...}}, d: {e: ...}}` 的校验顺序是 `a` `a.b` `a.b.c` `d` `d.e`。校验后将蓝图存入属性 
 `blueprint`，否则将在检查到第一个错误后立即抛出异常。
 
 在之后调用实例的 `verify` 方法时传入数据，此时开始校验数据。校验过程是递归的，以蓝图作为递归主体，根据蓝图中定义 `key`
@@ -72,7 +72,7 @@ dict, bool, NoneType, datetime.date, datetime.time, datetime.datetime]`。校验
 > 使用正则或函数校验数据。可以是一个正则表达式字符串、`re.Pattern` 的实例、可调用对象、可调用对象的路径字符串。正则校验调用 
 > `search` 方法，校验函数需要一个参数用于接收数据。若校验失败将返回 
 > `DataVerifyError`。可使用列表或元组定义多个校验，使用列表定义的多个校验将以 `or` 的关系执行，元组则 
-> `and`。校验方法 `verify` 将在下个版本拆分为 `regex` 和 `validator`，分别对应正则校验和函数校验。
+> `and`。另外，校验方法 `verify` 将在下个版本拆分为 `regex` 和 `validator`，分别对应正则校验和函数校验。
 
 > __<font color=#FFC66D>回调</font>__
 > 
@@ -86,6 +86,6 @@ dict, bool, NoneType, datetime.date, datetime.time, datetime.datetime]`。校验
 > 
 > <kbd><kbd>`items`</kbd></kbd>  
 > 蓝图关键字，当数据内层是一个列表时，用 `items` 连接。
-> 
-> 我们提供了一个 [完整的示例](https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py)
-> ，运用了该框架的大部分功能，阅读此文档必看此示例。
+
+我们提供了一个 [完整的示例](https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py)
+，运用了该框架的大部分功能，学习此框架必看此示例。
