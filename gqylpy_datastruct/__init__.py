@@ -53,7 +53,7 @@ class DataStruct:
         err: Union[dict, NoneType] = verify(data, self.blueprint)
 
         if err and eraise:
-            raise ge[err.pop('title')](err)
+            raise e[err.pop('title')](err)
 
         return err
 
@@ -72,6 +72,9 @@ class ______歌______琪______怡______玲______萍______云______:
             setattr(gpack, gname, gfunc)
 
 
-import gqylpy_exception as ge
-from types import NoneType
 from typing import Union, NoReturn
+
+try:
+    from types import NoneType
+except ImportError:
+    NoneType = type(None)
