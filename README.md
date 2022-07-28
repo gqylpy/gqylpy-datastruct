@@ -72,7 +72,7 @@ dict, bool, NoneType, datetime.date, datetime.time, datetime.datetime]`。校验
 > 使用正则或函数校验数据。可以是一个正则表达式字符串、`re.Pattern` 的实例、可调用对象、可调用对象的路径字符串。正则校验调用 
 > `search` 方法，校验函数需要一个参数用于接收数据。若校验失败将返回 
 > `DataVerifyError`。可使用列表或元组定义多个校验，使用列表定义的多个校验将以 `or` 的关系执行，元组则 
-> `and`。另外，校验方法 `verify` 将在下个版本拆分为 `regex` 和 `validator`，分别对应正则校验和函数校验。
+> `and`。校验方法 `verify` 将在下个版本拆分为 `regex` 和 `validator`，分别对应正则校验和函数校验。
 
 > __<font color=#FFC66D>回调</font>__
 > 

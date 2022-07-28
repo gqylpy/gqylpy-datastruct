@@ -27,7 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = 1, 0
+__version__ = 1, 0, 1
 __author__ = '竹永康 <gqylpy@outlook.com>'
 __source__ = 'https://github.com/gqylpy/gqylpy-datastruct'
 
@@ -44,16 +44,16 @@ class DataStruct:
         verify_and_upgrade(blueprint)
         self.blueprint = blueprint
 
-    def verify(self, data: dict, *, eraise: bool = False) -> 'Union[dict, NoReturn]':
+    def verify(self, data: dict, *, eraise: bool = False) -> 'Optional[dict]':
         """
         @param data:   Data to be verified.
         @param eraise: If true, an exception will be thrown if the verification fails.
         @return:       An error message, if the verification fails and parameter "eraise" is false.
         """
-        err: Union[dict, NoneType] = verify(data, self.blueprint)
+        err: Optional[dict] = verify(data, self.blueprint)
 
         if err and eraise:
-            raise e[err.pop('title')](err)
+            raise type(err.pop('title'), (Exception,), {})(err)
 
         return err
 
@@ -72,9 +72,4 @@ class ______歌______琪______怡______玲______萍______云______:
             setattr(gpack, gname, gfunc)
 
 
-from typing import Union, NoReturn
-
-try:
-    from types import NoneType
-except ImportError:
-    NoneType = type(None)
+from typing import Optional

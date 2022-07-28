@@ -35,7 +35,7 @@ import datetime as dt
 
 import gqylpy_exception as ge
 
-from typing import Union, Callable, NoReturn, Any
+from typing import Union, Callable, NoReturn, Any, Optional
 
 unique = b'GQYLPY, \xe6\x94\xb9\xe5\x8f\x98\xe4\xb8\x96\xe7\x95\x8c\xe3\x80\x82'
 
@@ -70,7 +70,7 @@ class DataStruct:
 
         self.blueprint = blueprint
 
-    def verify(self, data: dict, *, eraise: bool = False) -> Union[dict, NoReturn]:
+    def verify(self, data: dict, *, eraise: bool = False) -> Optional[dict]:
         return DataValidator(data, self.blueprint).verify(eraise=eraise)
 
     def disassemble(
@@ -133,7 +133,7 @@ class DataStruct:
             keypath:   str,
             blueprint: dict,
             limbtype:  str
-    ) -> Union[dict, NoReturn]:
+    ) -> Optional[dict]:
         try:
             limb: dict = blueprint[limbtype]
         except KeyError:
@@ -424,7 +424,7 @@ class DataValidator:
         self.data = data
         self.blueprint = blueprint
 
-    def verify(self, *, eraise: bool = False) -> Union[dict, NoReturn]:
+    def verify(self, *, eraise: bool = False) -> Optional[dict]:
         for key, sub_blueprint in self.blueprint.items():
             err: dict = self.disassemble(
                 keypath=key,
@@ -445,7 +445,7 @@ class DataValidator:
             value:     Any,
             data:      Union[dict, list],
             key:       Union[str, int]
-    ) -> Union[dict, NoReturn]:
+    ) -> Optional[dict]:
         option:      str  = blueprint.get('option')
         option_bool: bool = blueprint.get('option_bool')
         env:         str  = blueprint.get('env')
