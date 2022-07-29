@@ -13,8 +13,8 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     packages=[g.__name__],
     python_requires='>=3.6',
-    requires=['gqylpy_exception(>=1.1,<2.0)'],
-    install_requires=['gqylpy_exception>=1.1,<2.0'],
+    requires=['gqylpy_exception(>=1.1.1,<2.0)'],
+    install_requires=['gqylpy_exception>=1.1.1,<2.0'],
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',

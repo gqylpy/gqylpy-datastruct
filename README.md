@@ -31,7 +31,7 @@ err = datastruct.verify({'name': 'Alpha'})
 `DataNotFoundError`。取值后开始调用校验方法，按如下列出校验方法的前后顺序执行，全部校验通过最后执行回调
 `callback`，否则将在检查到第一个错误后立即终止校验并返回错误信息。
 
-> __<font color=#158fb5>取值方法</font>__
+> __取值方法__
 > 
 > <kbd><kbd>`option`</kbd></kbd>  
 > 从命令行选项中取值并更新到数据中。指定一个选项用 `"--password"`，指定多个选项用
@@ -44,12 +44,12 @@ err = datastruct.verify({'name': 'Alpha'})
 > <kbd><kbd>`env`</kbd></kbd>  
 > 从环境变量中取值并更新到数据中。若未取到值则不做处理，优先级低于其它取值方法，高于默认值。
 
-> __<font color=green>默认值</font>__
+> __默认值__
 > 
 > <kbd><kbd>`default`</kbd></kbd>  
 > 若 `key` 在数据中不存在，将创建 `key` 并用之为 `value`。
 
-> __<font color=brown>校验方法</font>__
+> __校验方法__
 > 
 > <kbd><kbd>`type`</kbd></kbd>  
 > 指定一个类，若数据不是这个类的实例并且也不是这个类的子类的实例，将返回 `DataTypeError`。其内部调用 `isinstance` 
@@ -74,12 +74,12 @@ dict, bool, NoneType, datetime.date, datetime.time, datetime.datetime]`。校验
 > `DataVerifyError`。可使用列表或元组定义多个校验，使用列表定义的多个校验将以 `or` 的关系执行，元组则 
 > `and`。校验方法 `verify` 将在下个版本拆分为 `regex` 和 `validator`，分别对应正则校验和函数校验。
 
-> __<font color=#FFC66D>回调</font>__
+> __回调__
 > 
 > <kbd><kbd>`callback`</kbd></kbd>  
 > 指定一个回调函数，将在校验通过后执行，回调函数需要一个参数用于接收数据，并在执行完毕后将其返回值更新到数据中。
 
-> __<font color=#CC7832>关键字</font>__
+> __关键字__
 > 
 > <kbd><kbd>`branch`</kbd></kbd>  
 > 蓝图关键字，当数据内层是一个字典时，用 `branch` 连接。
