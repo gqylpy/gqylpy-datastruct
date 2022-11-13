@@ -1,18 +1,4 @@
 """
-─────────────────────────────────────────────────────────────────────────────────────────────────────
-─██████████████─██████████████───████████──████████─██████─────────██████████████─████████──████████─
-─██░░░░░░░░░░██─██░░░░░░░░░░██───██░░░░██──██░░░░██─██░░██─────────██░░░░░░░░░░██─██░░░░██──██░░░░██─
-─██░░██████████─██░░██████░░██───████░░██──██░░████─██░░██─────────██░░██████░░██─████░░██──██░░████─
-─██░░██─────────██░░██──██░░██─────██░░░░██░░░░██───██░░██─────────██░░██──██░░██───██░░░░██░░░░██───
-─██░░██─────────██░░██──██░░██─────████░░░░░░████───██░░██─────────██░░██████░░██───████░░░░░░████───
-─██░░██──██████─██░░██──██░░██───────████░░████─────██░░██─────────██░░░░░░░░░░██─────████░░████─────
-─██░░██──██░░██─██░░██──██░░██─────────██░░██───────██░░██─────────██░░██████████───────██░░██───────
-─██░░██──██░░██─██░░██──██░░██─────────██░░██───────██░░██─────────██░░██───────────────██░░██───────
-─██░░██████░░██─██░░██████░░████───────██░░██───────██░░██████████─██░░██───────────────██░░██───────
-─██░░░░░░░░░░██─██░░░░░░░░░░░░██───────██░░██───────██░░░░░░░░░░██─██░░██───────────────██░░██───────
-─██████████████─████████████████───────██████───────██████████████─██████───────────────██████───────
-─────────────────────────────────────────────────────────────────────────────────────────────────────
-
 Copyright (c) 2022 GQYLPY <http://gqylpy.com>. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,14 +19,15 @@ import sys
 import inspect
 import datetime as dt
 
-import gqylpy_exception as ge
-
 from typing import Union, Callable, NoReturn, Any
+
+import gqylpy_exception as ge
 
 unique = b'GQYLPY, \xe6\x94\xb9\xe5\x8f\x98\xe4\xb8\x96\xe7\x95\x8c\xe3\x80\x82'
 
 coerces_supported = int, float, str, bytes, list, tuple, set, dict, bool
-types_supported = coerces_supported + (type(None), dt.date, dt.time, dt.datetime)
+types_supported = coerces_supported + \
+                  (type(None), dt.date, dt.time, dt.datetime)
 
 coerces = {}
 for i in coerces_supported:
@@ -53,7 +40,7 @@ for i in types_supported:
     types[i.__name__] = i
 
 coerces_supported = [i.__name__ for i in coerces_supported]
-types_supported = [i.__name__ for i in types_supported]
+types_supported   = [i.__name__ for i in types_supported  ]
 
 
 class DataStruct:
@@ -87,19 +74,24 @@ class DataStruct:
             x: str = blueprint.__class__.__name__
             raise ge.BlueprintStructureError({
                 'keypath': keypath,
-                'msg': f'Blueprint structure must be defined using "dict", not "{x}".'
+                'msg': 'blueprint structure must be defined using "dict", '
+                       f'not "{x}".'
             })
 
         for keywork_special in (type, set):
             if keywork_special in blueprint:
-                blueprint[keywork_special.__name__] = blueprint.pop(keywork_special)
+                blueprint[keywork_special.__name__] = \
+                    blueprint.pop(keywork_special)
 
         for key, value in blueprint.items():
-            if not(key in ('branch', 'items', 'default') or value in (None, ..., '')):
+            if not(
+                    key in ('branch', 'items', 'default') or
+                    value in (None, ..., '')
+            ):
                 if blueprint.get('option') and blueprint.get('option_bool'):
                     raise ge.BlueprintStructureError({
                         'keypath': keypath,
-                        'msg': 'Verification method "option" and '
+                        'msg': 'verification method "option" and '
                                '"option_bool" cannot exist together.'
                     })
                 try:
@@ -108,7 +100,7 @@ class DataStruct:
                     raise ge.BlueprintVerifyMethodError({
                         'keypath': keypath,
                         'verify_method': key,
-                        'msg': f'Unsupported verification method "{key}".',
+                        'msg': f'unsupported verification method "{key}".',
                         'supported_verify_method': verify_method_supported
                     })
                 verify_func(keypath, key, value, blueprint)
@@ -124,7 +116,8 @@ class DataStruct:
 
         if branch:
             for key, sub_blueprint in branch.items():
-                self.disassemble(f'{keypath}.branch.{key}', sub_blueprint, branch, key)
+                self.disassemble(
+                    f'{keypath}.branch.{key}', sub_blueprint, branch, key)
         elif items:
             self.disassemble(f'{keypath}.items', items, items, sup_key)
 
@@ -160,7 +153,7 @@ class DataStruct:
             x: str = f'"{notdefine[0]}"' if len(notdefine) == 1 else notdefine
             raise ge.BlueprintStructureError({
                 'keypath': keypath,
-                'msg': f'Limb can not define {x}.'
+                'msg': f'limb can not define {x}.'
             })
 
         return limb
@@ -194,9 +187,10 @@ class DataStruct:
                 raise ge.BlueprintTypeError({
                     'keypath': f'{keypath}.{key}',
                     'value': full_value,
-                    'msg': f'Unsupported type "{value}".',
+                    'msg': f'unsupported type "{value}".',
                     'supported_types': types_supported,
-                    'hint': 'If you need to define multiple types, use "tuple" or "list".'
+                    'hint': 'if you need to define multiple types, '
+                            'use "tuple" or "list".'
                 })
 
             if full_value:
@@ -226,8 +220,9 @@ class DataStruct:
             raise ge[f'BlueprintOption{"Bool" if boole else ""}Error']({
                 'keypath': f'{keypath}.{key}',
                 'value': full_value or value,
-                'msg': f'Option type must be a "str", not "{x}".',
-                'hint': 'If you need to define multiple options, use "tuple" or "list".'
+                'msg': f'option type must be a "str", not "{x}".',
+                'hint': 'if you need to define multiple options, '
+                        'use "tuple" or "list".'
             })
         if not full_value:
             blueprint[key] = getopt(
@@ -256,7 +251,7 @@ class DataStruct:
             raise ge.BlueprintENVError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': f'The "env" type must be a "str", not "{x}".'
+                'msg': f'"env" type must be a "str", not "{x}".'
             })
         blueprint[key] = os.getenv(value)
 
@@ -275,7 +270,7 @@ class DataStruct:
             raise ge.BlueprintCoerceError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': 'Unsupported conversion type.',
+                'msg': 'unsupported conversion type.',
                 'supported_coerces': coerces_supported
             })
         blueprint[key] = value
@@ -294,7 +289,7 @@ class DataStruct:
             raise ge.BlueprintEnumError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': f'The "enum" type must be a "tuple" or "list", not "{x}".'
+                'msg': f'"enum" type must be a "tuple" or "list", not "{x}".'
             })
         delete_repeated(value)
         blueprint[key] = tuple(value)
@@ -313,13 +308,13 @@ class DataStruct:
             raise ge.BlueprintSetError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': f'The "set" type must be a "tuple" or "list", not "{x}".'
+                'msg': f'"set" type must be a "tuple" or "list", not "{x}".'
             })
         if len(value) < 2:
             raise ge.BlueprintSetError({
                 'keypath': f'{keypath}.{key}',
                 'value': value,
-                'msg': 'The "set" length must be greater than 1.'
+                'msg': '"set" length must be greater than 1.'
             })
 
         delete_repeated(value)
@@ -346,11 +341,14 @@ class DataStruct:
                 try:
                     path, _, func = value.rpartition('.')
                     value: Callable = gimport(path, func)
-                    if not (callable(value) and inspect.signature(value).parameters):
+                    if not (
+                            callable(value) and
+                            inspect.signature(value).parameters
+                    ):
                         raise ge.BlueprintVerifyError({
                             'keypath': keypath,
                             'value': full_value or raw_value,
-                            'msg': 'Verification function must be callable '
+                            'msg': 'verification function must be callable '
                                    'and take at least one parameter.'
                         })
                 except (ModuleNotFoundError, AttributeError, ValueError) as e:
@@ -366,20 +364,21 @@ class DataStruct:
                     raise ge.BlueprintVerifyError({
                         'keypath': keypath,
                         'value': full_value or value,
-                        'msg': 'Verification function must take at least one parameter.'
+                        'msg': 'verification function must take at least one '
+                               'parameter.'
                     })
             elif value.__class__ is not re.Pattern:
                 raise ge.BlueprintVerifyError({
                     'keypath': f'{keypath}.{key}',
                     'value': full_value or value,
-                    'msg': 'Unsupported verify mode.',
+                    'msg': 'unsupported verify mode.',
                     'supported_verify_mode': [
                         'Regular Expression', 're.Pattern object',
                         'callable object', 'callable object path'
                     ],
-                    'hint': 'If you need to define multiple verify, use "tuple" or "list", '
-                            '"tuple" will be execute in "and" mode, '
-                            '"list" will be execute in "or" mode.',
+                    'hint': 'if you need to define multiple verify, use '
+                            '"tuple" or "list", "tuple" will be execute in '
+                            '"and" mode, "list" will be execute in "or" mode.'
                 })
 
             if full_value:
@@ -408,7 +407,7 @@ class DataStruct:
             raise ge.BlueprintCallbackError({
                 'keypath': keypath,
                 'value': value,
-                'msg': 'Not a callable object.'
+                'msg': 'not a callable object.'
             })
         blueprint[key] = value
 
@@ -461,7 +460,7 @@ class DataValidator:
                 return {
                     'title': 'DataNotFoundError',
                     'keypath': keypath,
-                    'msg': 'Data not found.'
+                    'msg': 'data not found.'
                 }
             value = data[key] = blueprint['default']
 
@@ -531,7 +530,7 @@ class DataValidator:
                 'keypath': keypath,
                 'value': value,
                 'type': type_,
-                'msg': f'Data type must be {msg}, not "{x}".'
+                'msg': f'data type must be {msg}, not "{x}".'
             }
         return 1, value
 
@@ -591,7 +590,7 @@ class DataValidator:
                     'keypath': keypath,
                     'value': value,
                     'set': set_,
-                    'msg': f'There is no "{x}" in set.'
+                    'msg': f'there is no "{x}" in set.'
                 }
         else:
             if value not in set_:
@@ -625,7 +624,7 @@ class DataValidator:
                     'keypath': keypath,
                     'value': value,
                     'verify': verify,
-                    'msg': 'Verify failed.',
+                    'msg': 'verify failed.',
                     'hint': '"tuple" will be execute in "and" mode, '
                             '"list" will be execute in "or" mode.'
                 }
@@ -657,7 +656,7 @@ class DataValidator:
                 'keypath': keypath,
                 'value': value,
                 'verify': full_verify or verify,
-                'msg': 'Value verification failed.'
+                'msg': 'value verification failed.'
             }
         return 1, value
 
@@ -698,14 +697,14 @@ def getopt(*options, boole: bool = False) -> Union[str, bool, NoReturn]:
                 return True
             if index + 1 < len(args) and args[index + 1][0] != '-':
                 return args[index + 1]
-            raise ge.OptionError(f'Option "{value}" need a parameter.')
+            raise ge.OptionError(f'option "{value}" need a parameter.')
 
         for opt in options:
             if value.startswith(opt + '='):
                 if boole:
                     x: str = value.split("=", 1)[0]
                     raise ge.OptionError(
-                        f'''Option "{x}" don't need parameter.''')
+                        f'''option "{x}" don't need parameter.''')
                 return value.split('=', 1)[1]
 
         index -= 1
