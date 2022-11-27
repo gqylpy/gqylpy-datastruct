@@ -6,7 +6,7 @@ blueprint to verify that the incoming data is correct.
     >>> datastruct = DataStruct({'name': {type: str}})
     >>> err = datastruct.verify({'name': 'Alpha'})
 
-    @version: 1.0.3
+    @version: 2.0
     @author: 竹永康 <gqylpy@outlook.com>
     @source: https://github.com/gqylpy/gqylpy-datastruct
 
@@ -29,9 +29,17 @@ limitations under the License.
 
 class DataStruct:
 
-    def __init__(self, blueprint: dict):
+    def __init__(
+            self,
+            blueprint: dict,
+            *,
+            eraise:                bool = None,
+            etitle:                str  = None,
+            ignore_undefined_data: bool = None,
+            allowable_placeholder: list = None
+    ):
         """
-        @param blueprint:
+        @param blueprint
             Receive a data blueprint.
 
             See the documentation at
@@ -39,29 +47,54 @@ class DataStruct:
 
             We provide an example in
                 https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py
+
+        @param eraise
+            By default, error information is returned as a return value, but if
+            you want to raise an exception based on this error information, can
+            set this parameter to True.
+
+        @param etitle
+            The prefix of error information title, default is "Data".
+
+        @param ignore_undefined_data
+            For data not defined in the blueprint, an error information titled
+            `DataUndefinedError` is returned. If you want to ignore undefined
+            data, can set this parameter to True.
+
+        @param allowable_placeholder:
+            Allowed placeholder in blueprint, default `(None, ..., '', (), [])`.
+
+        Some parameters have lower priorities than those in the `verify` method.
         """
-        __verify_and_upgrade__(blueprint)
         self.blueprint = blueprint
 
     def verify(
             self,
-            data:   dict,
+            data: dict,
             *,
-            eraise: bool = None
+            eraise:                bool = None,
+            etitle:                str  = None,
+            ignore_undefined_data: bool = None
     ) -> 'Union[dict, None]':
         """
-        @param data:   Data to be verified.
-        @param eraise: Default False, if set to True and verification fails then
-                       raise exception.
-        @return:       An error message, if the verification fails and parameter
-                       `eraise` is false.
+        @param data
+            The data to be verified.
+
+        @param eraise
+            By default, error information is returned as a return value, but if
+            you want to raise an exception based on this error information, can
+            set this parameter to True.
+
+        @param etitle
+            The prefix of error information title, default is "Data".
+
+        @param ignore_undefined_data
+            For data not defined in the blueprint, an error information titled
+            `DataUndefinedError` is returned. If you want to ignore undefined
+            data, can set this parameter to True.
+
+        @return: The error information if verification fails.
         """
-        err: Union[dict, None] = __verify__(data, self.blueprint)
-
-        if err and eraise:
-            raise type(err.pop('title'), (Exception,), {})(err)
-
-        return err
 
 
 class _xe6_xad_x8c_xe7_x90_xaa_xe6_x80_xa1_xe7_x8e_xb2_xe8_x90_x8d_xe4_xba_x91:
