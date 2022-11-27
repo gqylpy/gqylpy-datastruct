@@ -27,64 +27,80 @@ err = datastruct.verify({'name': 'Alpha'})
 `blueprint`，否则将在检查到第一个错误后立即抛出异常。
 
 在之后调用实例的 `verify` 方法时传入数据，此时开始校验数据。校验过程是递归的，以蓝图作为递归主体，根据蓝图中定义 `key`
-的顺序，从前往后，由浅入深从数据中取值。若 `key` 在数据中不存在，并且没有定义任何取值方法和默认值或定义的取值方法未取到值，将立即返回
-`DataNotFoundError`。取值后开始调用校验方法，按如下列出校验方法的前后顺序执行，全部校验通过最后执行回调
+的顺序，从前往后，由浅入深从数据中取值。若 `key` 在数据中不存在，并且没有定义任何取值方法和默认值或定义的取值方法未取到值，并且未声明 `key`
+是可选的，将立即返回 `DataNotFoundError`。取值后开始调用校验方法，按如下列出校验方法的前后顺序执行，全部校验通过最后执行回调
 `callback`，否则将在检查到第一个错误后立即终止校验并返回错误信息。
 
-> __<font color=#158fb5>取值方法</font>__
+> __取值方法__
 > 
-> <kbd><kbd>`option`</kbd></kbd>  
+> <kbd>`option`</kbd>  
 > 从命令行选项中取值并更新到数据中。指定一个选项用 `"--password"`，指定多个选项用
 `("-p", "--password", ...)`。若未取到值则不做处理。优先级高于取值方法 `env` 和默认值 `default`。
 > 
-> <kbd><kbd>`option_bool`</kbd></kbd>  
+> <kbd>`option_bool`</kbd>  
 > 检索命令行中有无指定的选项而更新数据中的值为 `True` 或 `False`，它是 `option` 的扩展，优先级同 `option`。`option`
 和 `option_bool` 不可同时定义，否则将抛出 `BlueprintStructureError`。
 > 
-> <kbd><kbd>`env`</kbd></kbd>  
+> <kbd>`env`</kbd>  
 > 从环境变量中取值并更新到数据中。若未取到值则不做处理，优先级低于其它取值方法，高于默认值。
 
-> __<font color=green>默认值</font>__
+> __默认值__
 > 
-> <kbd><kbd>`default`</kbd></kbd>  
+> <kbd>`default`</kbd>  
 > 若 `key` 在数据中不存在，将创建 `key` 并用之为 `value`。
 
-> __<font color=brown>校验方法</font>__
+> __可选参数__
 > 
-> <kbd><kbd>`type`</kbd></kbd>  
-> 指定一个类，若数据不是这个类的实例并且也不是这个类的子类的实例，将返回 `DataTypeError`。其内部调用 `isinstance` 
-方法，可使用元组或列表指定多个类。可指定的类有 `[int, float, str, bytes, list, tuple, set, 
-dict, bool, NoneType, datetime.date, datetime.time, datetime.datetime]`。校验方法 `type`
+> <kbd>`params`</kbd>  
+> 使用元祖或列表指定一个或多个可选参数，可选的参数如下。  
+> `optional`: 声明 `key` 是可选的，若 `key` 在数据中不存在，则跳过校验。  
+> `delete_none`: 若值是 `None`，则跳过校验，并将其键值对从数据中删除。  
+> `delete_empty`: 若值是空的，则跳过校验，并将其键值对从数据中删除。这里的空包括：`None`，`...`，`""`，以及任何长度等于0的容器。  
+> `ignore_none`: 若值是 `None`，则跳过校验。优先级低于 `delete_none` 和 `delete_empty`。  
+> `ignore_empty`: 若值是空的，则跳过校验。优先级低于 `delete_none` 和 `delete_empty`。  
+
+> __校验方法__
+> 
+> <kbd>`delete_if_in`</kbd>  
+> 使用元祖或列表指定一个或多个不希望得到的值，若传入的值位于其中，则跳过校验，并将其键值对从数据中删除。
+> 
+> <kbd>`ignore_if_in`</kbd>  
+> 使用元祖或列表指定一个或多个不需要校验的值，若传入的值位于其中，则跳过校验。优先级低于 `delete_if_in`。
+>
+> <kbd>`type`</kbd>  
+> 指定一个类，若值不是这个类的实例并且也不是这个类的子类的实例，将返回 `DataTypeError`。其内部调用 `isinstance` 
+方法，可使用元组或列表指定多个类。可指定的类有 `[int, float, bytes, str, tuple, list, set, frozenset, dict, bool, NoneType, 
+> Generator, Iterator, Iterable, datetime.date, datetime.time, datetime.datetime, decimal.Decimal]`。校验方法 `type`
 的定义是针对内置的基础的大众所熟知的类型进行校验，若要校验其它类型，可编写校验函数并传给校验方法 `verify`。
 > 
-> <kbd><kbd>`coerce`</kbd></kbd>  
-> 转换数据的类型，可转换为 `[int, float, str, bytes, list, tuple, set, dict, bool]`。若类型无法被转换，将返回 
+> <kbd>`coerce`</kbd>  
+> 转换值的类型，可转换为 `[int, float, bytes, str, tuple, list, set, dict, bool]`。若类型无法被转换，将返回 
 > `DataCoerceError`。若要转换为其它类型，可编写回调函数并传给回调 `callback`。
 > 
-> <kbd><kbd>`enum`</kbd></kbd>  
+> <kbd>`enum`</kbd>  
 > 枚举，列出一个或多个值，只能在给定的范围内选择一个值，否则将返回 `DataEnumError`。`enum` 的灵感来源于 MySQL 中的枚举类型。
 > 
-> <kbd><kbd>`set`</kbd></kbd>  
+> <kbd>`set`</kbd>  
 > 集合，列出至少两个值，只能在给定的范围内选择一个或多个值，否则将返回 
 `DataSetError`。选择值时必须使用列表或元组，若只选择一个值，可直接传入，它会在校验通过后被套上列表。`set` 的灵感来源于 MySQL 中的集合类型。
 > 
-> <kbd><kbd>`verify`</kbd></kbd>  
+> <kbd>`verify`</kbd>  
 > 使用正则或函数校验数据。可以是一个正则表达式字符串、`re.Pattern` 的实例、可调用对象、可调用对象的路径字符串。正则校验调用 
 > `search` 方法，校验函数需要一个参数用于接收数据。若校验失败将返回 
 > `DataVerifyError`。可使用列表或元组定义多个校验，使用列表定义的多个校验将以 `or` 的关系执行，元组则 
-> `and`。另外，校验方法 `verify` 将在下个版本拆分为 `regex` 和 `validator`，分别对应正则校验和函数校验。
+> `and`。校验方法 `verify` 将在下个版本拆分为 `regex` 和 `validator`，分别对应正则校验和函数校验。
 
-> __<font color=#FFC66D>回调</font>__
+> __回调__
 > 
-> <kbd><kbd>`callback`</kbd></kbd>  
+> <kbd>`callback`</kbd>  
 > 指定一个回调函数，将在校验通过后执行，回调函数需要一个参数用于接收数据，并在执行完毕后将其返回值更新到数据中。
 
-> __<font color=#CC7832>关键字</font>__
+> __关键字__
 > 
-> <kbd><kbd>`branch`</kbd></kbd>  
+> <kbd>`branch`</kbd>  
 > 蓝图关键字，当数据内层是一个字典时，用 `branch` 连接。
 > 
-> <kbd><kbd>`items`</kbd></kbd>  
+> <kbd>`items`</kbd>  
 > 蓝图关键字，当数据内层是一个列表时，用 `items` 连接。
 
 我们提供了一个 [完整的示例](https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py)
