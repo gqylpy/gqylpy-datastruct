@@ -619,8 +619,11 @@ class DataValidator:
                 keypath, x, value, data, key
             )
             if not code:
-                if value is None and key in data:
-                    self.keypaths_verified.append(keypath)
+                if value is None:
+                    if key in data:
+                        self.keypaths_verified.append(keypath)
+                    elif 'default' in blueprint:
+                        data[key] = blueprint['default']
                 return value
 
         branch: dict = blueprint.get('branch')
