@@ -577,7 +577,6 @@ class DataValidator:
             data:              Union[dict, list],
             key:               Union[str, int]
     ) -> Union[dict, None]:
-
         option:      str  = blueprint.get('option')
         option_bool: bool = blueprint.get('option_bool')
         env:         str  = blueprint.get('env')
@@ -600,17 +599,7 @@ class DataValidator:
                     'msg': f'keypath "{keypath}" not found.'
                 }
 
-        for name in (
-                'params',
-                'delete_if_in',
-                'ignore_if_in',
-                'type',
-                'coerce',
-                'enum',
-                'set',
-                'verify',
-                'callback'
-        ):
+        for name in ('params', 'delete_if_in', 'ignore_if_in', 'type'):
             try:
                 x: Any = blueprint[name]
             except KeyError:
@@ -630,27 +619,45 @@ class DataValidator:
         items:  dict = blueprint.get('items')
 
         if branch:
-            for key, sub_blueprint in branch.items():
+            for k, sub_blueprint in branch.items():
                 err: Union[dict, None] = self.disassemble(
-                    keypath=f'{keypath}.{key}',
+                    keypath=f'{keypath}.{k}',
                     blueprint=sub_blueprint,
-                    value=value.get(key, unique),
+                    value=value.get(k, unique),
                     data=value,
-                    key=key
+                    key=k
                 )
                 if err:
                     return err
         elif items:
-            for index, item in enumerate(value):
+            if not value:
+                return {
+                    'title': 'NotFoundError',
+                    'keypath': keypath,
+                    'value': value,
+                    'msg': 'at least one term.'
+                }
+            for i, item in enumerate(value):
                 err: Union[dict, None] = self.disassemble(
-                    keypath=f'{keypath}[{index}]',
+                    keypath=f'{keypath}[{i}]',
                     blueprint=items,
                     value=item,
                     data=value,
-                    key=index
+                    key=i
                 )
                 if err:
                     return err
+
+        for name in ('coerce', 'enum', 'set', 'verify', 'callback'):
+            try:
+                x: Any = blueprint[name]
+            except KeyError:
+                continue
+            code, value = getattr(self, f'verify_{name}')(
+                keypath, x, value, data, key
+            )
+            if not code:
+                return value
 
         self.keypaths_verified.append(keypath)
 
@@ -772,6 +779,14 @@ class DataValidator:
             key:     str
     ) -> tuple:
         if value.__class__ in (list, tuple):
+            if not value:
+                return 0, {
+                    'title': 'SetError',
+                    'keypath': keypath,
+                    'value': value,
+                    'set': set_,
+                    'msg': f'choose at least one term from set.'
+                }
             notfound = [x for x in value if x not in set_]
             if notfound:
                 x: str = ' and '.join(f'"{x}"' for x in notfound)
@@ -782,6 +797,7 @@ class DataValidator:
                     'set': set_,
                     'msg': f'{x} is not in set.'
                 }
+            delete_repeated(value)
         else:
             if value not in set_:
                 return 0, {
