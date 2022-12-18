@@ -16,11 +16,12 @@ limitations under the License.
 import os
 import re
 import sys
+import copy
 import inspect
 import decimal
 import datetime
 
-from typing import Union, Callable, Generator, Iterator, Iterable, Any
+from typing import Union, Callable, Generator, Any
 
 import gqylpy_exception as ge
 
@@ -30,9 +31,7 @@ coerces_supported = (
     int, float, bytes, str, tuple, list, set, frozenset, dict, bool
 )
 types_supported = coerces_supported + (
-    type(None),
-    decimal.Decimal,
-    Generator, Iterator, Iterable,
+    type(None), decimal.Decimal,
     datetime.date, datetime.time, datetime.datetime
 )
 
@@ -589,7 +588,8 @@ class DataValidator:
             value = data[key] = env
         elif value is unique:
             if 'default' in blueprint:
-                value = data[key] = blueprint['default']
+                data[key] = copy.deepcopy(blueprint['default'])
+                value = data[key]  # compatible gqylpy_dict
             elif 'params' in blueprint and 'optional' in blueprint['params']:
                 return
             else:
@@ -599,7 +599,7 @@ class DataValidator:
                     'msg': f'keypath "{keypath}" not found.'
                 }
 
-        for name in ('params', 'delete_if_in', 'ignore_if_in', 'type'):
+        for name in 'params', 'delete_if_in', 'ignore_if_in', 'type':
             try:
                 x: Any = blueprint[name]
             except KeyError:
@@ -648,7 +648,7 @@ class DataValidator:
                 if err:
                     return err
 
-        for name in ('coerce', 'enum', 'set', 'verify', 'callback'):
+        for name in 'coerce', 'enum', 'set', 'verify', 'callback':
             try:
                 x: Any = blueprint[name]
             except KeyError:

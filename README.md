@@ -70,7 +70,7 @@ err = datastruct.verify({'name': 'Alpha'})
 > <kbd>`type`</kbd>  
 > 指定一个类，若值不是这个类的实例并且也不是这个类的子类的实例，将返回 `DataTypeError`。其内部调用 `isinstance` 
 方法，可使用元组或列表指定多个类。可指定的类有 `[int, float, bytes, str, tuple, list, set, frozenset, dict, bool, NoneType, 
-> Generator, Iterator, Iterable, datetime.date, datetime.time, datetime.datetime, decimal.Decimal]`。校验方法 `type`
+> datetime.date, datetime.time, datetime.datetime, decimal.Decimal]`。校验方法 `type`
 的定义是针对内置的基础的大众所熟知的类型进行校验，若要校验其它类型，可编写校验函数并传给校验方法 `verify`。
 > 
 > <kbd>`coerce`</kbd>  
