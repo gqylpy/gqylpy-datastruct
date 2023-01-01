@@ -6,12 +6,12 @@ blueprint to verify that the incoming data is correct.
     >>> datastruct = DataStruct({'name': {type: str}})
     >>> err = datastruct.verify({'name': 'Alpha'})
 
-    @version: 2.2.1
+    @version: 2.2.2
     @author: 竹永康 <gqylpy@outlook.com>
     @source: https://github.com/gqylpy/gqylpy-datastruct
 
 ────────────────────────────────────────────────────────────────────────────────
-Copyright (c) 2022 GQYLPY <http://gqylpy.com>. All rights reserved.
+Copyright (c) 2022, 2023 GQYLPY <http://gqylpy.com>. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

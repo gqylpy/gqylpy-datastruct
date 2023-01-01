@@ -1,5 +1,5 @@
 """
-Copyright (c) 2022 GQYLPY <http://gqylpy.com>. All rights reserved.
+Copyright (c) 2022, 2023 GQYLPY <http://gqylpy.com>. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -608,12 +608,12 @@ class DataValidator:
                 keypath, x, value, data, key
             )
             if not code:
-                if value is None:
+                if value is None and 'default' in blueprint:
+                    value = data[key] = blueprint['default']
+                else:
                     if key in data:
                         self.keypaths_verified.append(keypath)
-                    elif 'default' in blueprint:
-                        data[key] = blueprint['default']
-                return value
+                    return value
 
         branch: dict = blueprint.get('branch')
         items:  dict = blueprint.get('items')
