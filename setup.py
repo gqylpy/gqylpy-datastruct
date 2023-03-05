@@ -30,7 +30,7 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     packages=[g.__name__],
     python_requires='>=3.6, <4',
-    install_requires=['gqylpy==1.0'] + requires,
+    install_requires=requires,
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
