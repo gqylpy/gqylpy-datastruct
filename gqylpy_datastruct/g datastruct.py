@@ -21,7 +21,7 @@ import inspect
 import decimal
 import datetime
 
-from typing import Union, Callable, Generator, Any
+from typing import Union, Pattern, Callable, Generator, Any
 
 import gqylpy_exception as ge
 
@@ -444,7 +444,7 @@ class DataStruct:
             self,
             keypath:    str,
             key:        str,
-            value:      Union[str, Callable, re.Pattern, tuple, list],
+            value:      Union[str, Callable, Pattern, tuple, list],
             blueprint:  dict,
             *,
             full_value: Union[tuple, list] = None
@@ -813,7 +813,7 @@ class DataValidator:
     def verify_verify(
             self,
             keypath:     str,
-            verify:      Union[re.Pattern, Callable, list, tuple],
+            verify:      Union[Pattern, Callable, list, tuple],
             value:       Any,
             _, __,
     ) -> tuple:
@@ -836,7 +836,8 @@ class DataValidator:
                     'hint': '"tuple" will be execute in "and" mode, '
                             '"list" will be execute in "or" mode.'
                 }
-        elif verify.__class__ is re.Pattern:
+        elif (sys.version_info >= (3, 8) and verify.__class__ is re.Pattern) \
+                or (str(verify.__class__) == "<class '_sre.SRE_Pattern'>"):
             if value.__class__ in (int, float):
                 value = str(value)
             try:

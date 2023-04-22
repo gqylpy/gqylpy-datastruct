@@ -10,9 +10,6 @@ with open(g.__file__, encoding='utf8') as f:
     author, email = f.readline().split(maxsplit=1)[-1].rstrip().split()
     source = f.readline().split()[-1]
 
-with open('README.md', encoding='utf8') as f:
-    long_description = f.read()
-
 with open('requirements.txt', encoding='utf8') as f:
     requires = [str(x) for x in pkg_resources.parse_requirements(f)]
 
@@ -26,7 +23,7 @@ setuptools.setup(
     project_urls={'Source': source},
     description='创建一张蓝图来规划好程序需要的数据结构，并在之后使用该蓝图去校验到来的数据是'
                 '否如期。',
-    long_description=long_description,
+    long_description=open('README.md', encoding='utf8').read(),
     long_description_content_type='text/markdown',
     packages=[g.__name__],
     python_requires='>=3.6, <4',
