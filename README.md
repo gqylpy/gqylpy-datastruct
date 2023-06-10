@@ -1,12 +1,14 @@
 [<img alt="LOGO" src="http://www.gqylpy.com/static/img/favicon.ico" height="21" width="21"/>](http://www.gqylpy.com)
-[![Version](https://img.shields.io/pypi/v/gqylpy_datastruct)](https://pypi.org/project/gqylpy_datastruct/)
+[![Release](https://img.shields.io/github/release/gqylpy/gqylpy-datastruct.svg?style=flat-square")](https://github.com/gqylpy/gqylpy-datastruct/releases/latest)
 [![Python Versions](https://img.shields.io/pypi/pyversions/gqylpy_datastruct)](https://pypi.org/project/gqylpy_datastruct)
 [![License](https://img.shields.io/pypi/l/gqylpy_datastruct)](https://github.com/gqylpy/gqylpy-datastruct/blob/master/LICENSE)
-[![Downloads](https://pepy.tech/badge/gqylpy_datastruct/month)](https://pepy.tech/project/gqylpy_datastruct)
+[![Downloads](https://pepy.tech/badge/gqylpy_datastruct)](https://pepy.tech/project/gqylpy_datastruct)
 
 # gqylpy-datastruct
 
 > 创建一张蓝图来规划好程序需要的数据结构，并在之后使用该蓝图去校验到来的数据是否如期。
+
+_这是一个雏形。_
 
 <kbd>pip3 install gqylpy_datastruct</kbd>
 
@@ -70,7 +72,7 @@ err = datastruct.verify({'name': 'Alpha'})
 > <kbd>`type`</kbd>  
 > 指定一个类，若值不是这个类的实例并且也不是这个类的子类的实例，将返回 `DataTypeError`。其内部调用 `isinstance` 
 方法，可使用元组或列表指定多个类。可指定的类有 `[int, float, bytes, str, tuple, list, set, frozenset, dict, bool, NoneType, 
-> Generator, Iterator, Iterable, datetime.date, datetime.time, datetime.datetime, decimal.Decimal]`。校验方法 `type`
+> datetime.date, datetime.time, datetime.datetime, decimal.Decimal]`。校验方法 `type`
 的定义是针对内置的基础的大众所熟知的类型进行校验，若要校验其它类型，可编写校验函数并传给校验方法 `verify`。
 > 
 > <kbd>`coerce`</kbd>  
