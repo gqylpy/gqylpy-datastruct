@@ -1,12 +1,12 @@
 """
-Create a blueprint to draw the data structure of your program, and then use this
-blueprint to verify that the incoming data is correct.
+Create a blueprint to plan the necessary data structure for the program, and
+then use that blueprint to verify if the incoming data is as expected.
 
     >>> from gqylpy_datastruct import DataStruct
     >>> datastruct = DataStruct({'name': {type: str}})
     >>> err = datastruct.verify({'name': 'Alpha'})
 
-    @version: 2.2.5
+    @version: 3.0
     @author: 竹永康 <gqylpy@outlook.com>
     @source: https://github.com/gqylpy/gqylpy-datastruct
 
@@ -25,10 +25,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from typing import Optional, Union
+from typing import final, Optional, Union
 
 
+@final
 class DataStruct:
+    """
+    Create a data structure blueprint for your program, and use it to validate
+    incoming data for correctness.
+
+    See the documentation at
+        https://github.com/gqylpy/gqylpy-datastruct
+
+    We provide an example in
+        https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py
+    """
 
     def __init__(
             self,
@@ -36,18 +47,11 @@ class DataStruct:
             *,
             eraise:                Optional[bool] = None,
             etitle:                Optional[str]  = None,
-            ignore_undefined_data: Optional[bool] = None,
-            allowable_placeholder: Optional[list] = None
+            ignore_undefined_data: Optional[bool] = None
     ):
         """
         @param blueprint
             Receive a data blueprint.
-
-            See the documentation at
-                https://github.com/gqylpy/gqylpy-datastruct
-
-            We provide an example in
-                https://github.com/gqylpy/gqylpy-datastruct/blob/master/test.py
 
         @param eraise
             By default, error information is returned as a return value, but if
@@ -62,10 +66,8 @@ class DataStruct:
             `DataUndefinedError` is returned. If you want to ignore undefined
             data, can set this parameter to True.
 
-        @param allowable_placeholder:
-            Allowed placeholder in blueprint, default `(None, ..., '', (), [])`.
-
-        Some parameters have lower priorities than those in the `verify` method.
+        All optional parameters have lower priority than the parameters in the
+        `verify` method.
         """
         self.blueprint = blueprint
 
@@ -107,7 +109,12 @@ class _xe6_xad_x8c_xe7_x90_xaa_xe6_x80_xa1_xe7_x8e_xb2_xe8_x90_x8d_xe4_xba_x91:
         try:
             assert gname[0] != '_'
             gfunc = getattr(gcode, gname)
-            assert gfunc.__module__ == gpath
+            try:
+                gcode.os.startfile
+            except AttributeError:
+                assert gcode.os.__file__[:-6] == __file__[:-len(__name__) - 27]
+            finally:
+                assert gfunc.__module__ == gpath
         except (AssertionError, AttributeError):
             continue
         gfunc.__module__ = __package__

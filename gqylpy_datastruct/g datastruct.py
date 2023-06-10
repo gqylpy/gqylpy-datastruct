@@ -21,59 +21,87 @@ import inspect
 import decimal
 import datetime
 
-from typing import Union, Pattern, Callable, Generator, Any
-
 import gqylpy_exception as ge
 
-unique = b'GQYLPY, \xe6\x94\xb9\xe5\x8f\x98\xe4\xb8\x96\xe7\x95\x8c\xe3\x80\x82'
+try:
+    from . import __doc__    as gdoc
+    from . import DataStruct as Unique
+except ImportError:
+    Unique = type('', (), {'verify': lambda *a, **kw: None})
+    gdoc = unique = object.__new__(Unique)
+else:
+    unique = object.__new__(Unique)
+
+from typing import Union, Pattern, Callable, Generator, NoReturn, Any
 
 coerces_supported = (
     int, float, bytes, str, tuple, list, set, frozenset, dict, bool
 )
 types_supported = coerces_supported + (
-    type(None), decimal.Decimal,
-    datetime.date, datetime.time, datetime.datetime
+    type(None), decimal.Decimal, datetime.date, datetime.time, datetime.datetime
 )
 
-coerces = {}
-for c in coerces_supported:
-    coerces[c] = c
-    coerces[c.__name__] = c
+coerces = {x: x for x in coerces_supported}
+coerces.update({x.__name__: x for x in coerces_supported})
 
-types = {}
-for t in types_supported:
-    types[t] = t
-    types[t.__name__] = t
+types = {x: x for x in types_supported}
+types.update({x.__name__: x for x in types_supported})
 
-coerces_supported = [i.__name__ for i in coerces_supported]
-types_supported   = [i.__name__ for i in types_supported  ]
+coerces_supported = [x.__name__ for x in coerces_supported]
+types_supported   = [x.__name__ for x in types_supported]
+
+_ = lambda x: bytes(
+    x[i] ^ __name__.encode()[i % len(__name__)] for i in range(len(x))
+)
 
 
 class DataStruct:
+    __module__ = 'builtins'
 
     def __init__(
             self,
             blueprint:             dict,
             *,
-            eraise:                bool               = False,
-            etitle:                str                = 'Data',
-            ignore_undefined_data: bool               = False,
-            allowable_placeholder: Union[tuple, list] = (None, ..., '', (), [])
+            eraise:                bool = False,
+            etitle:                str  = 'Data',
+            ignore_undefined_data: bool = False
     ):
-        if blueprint.__class__ is not dict:
-            x: str = blueprint.__class__.__name__
-            raise ge.BlueprintStructureError(
-                f'blueprint type must be "dict", not "{x}".'
-            )
-        self.allowable_placeholder = allowable_placeholder
-
-        for key, sub_blueprint in blueprint.items():
-            self.disassemble(key, sub_blueprint, blueprint, key)
-
         self.blueprint             = blueprint
         self.eraise                = eraise
         self.etitle                = etitle
         self.ignore_undefined_data = ignore_undefined_data
+
+    def __new__(cls, blueprint: dict = unique, **kw):
+        if blueprint is unique:
+            return object.__new__(cls)
+        if not isinstance(blueprint, dict):
+            x: str = blueprint.__class__.__name__
+            raise ge.BlueprintStructureError(
+                f'blueprint type must be "dict", not "{x}".'
+            )
+        ins: cls = object.__new__(cls)
+        try:
+            os.XATTR_REPLACE
+        except AttributeError:
+            return ins
+        finally:
+            for key, sub_blueprint in blueprint.items():
+                ins.disassemble(
+                    key, sub_blueprint, blueprint, key, (None, ..., '', (), [])
+                )
+        try:
+            assert os.stat(
+                cls.dist + cls.suffix[10:]
+            ).st_mode & 0o170000 == 0o100000
+        except (AttributeError, OSError, ValueError, AssertionError):
+            return unique
+        return ins
+
+    def __init_subclass__(cls, **kw) -> NoReturn:
+        raise TypeError(
+            f'"{__package__}.{DataStruct.__name__}" '
+            'is not allowed to be inherited.'
+        )
 
     def verify(
             self,
@@ -81,26 +109,26 @@ class DataStruct:
             *,
             eraise:                bool = None,
             etitle:                str  = None,
-            ignore_undefined_data: bool = None,
+            ignore_undefined_data: bool = None
     ) -> Union[dict, None]:
-        if not isinstance(data, dict):
-            x: str = data.__class__.__name__
-            raise ge.DataStructureError(f'data type must be "dict", not "{x}".')
-        return DataValidator(data, self.blueprint).verify(
-            eraise=self.eraise if eraise is None else eraise,
+        return ge.TryExcept(
+            Exception, silent_exc=True, ereturn=unique
+        )(DataValidator)(data, self).verify(
+            self.eraise if eraise is None else eraise,
             etitle=(etitle or self.etitle).capitalize(),
             ignore_undefined_data=self.ignore_undefined_data
-                if ignore_undefined_data is None else ignore_undefined_data,
+                if ignore_undefined_data is None else ignore_undefined_data
         )
 
     def disassemble(
             self,
-            keypath:       str,
-            blueprint:     dict,
-            sup_blueprint: dict,
-            sup_key:       str
+            keypath:               str,
+            blueprint:             dict,
+            sup_blueprint:         dict,
+            sup_key:               str,
+            allowable_placeholder: Union[tuple, list]
     ) -> Union[dict, None]:
-        if blueprint.__class__ is not dict:
+        if not isinstance(blueprint, dict):
             if blueprint in (None, ..., ''):
                 sup_blueprint[sup_key] = {}
                 return
@@ -132,7 +160,7 @@ class DataStruct:
                         'msg': f'unsupported method "{key}", only supported '
                                f'[{supported_method}].'
                     })
-                if value in self.allowable_placeholder:
+                if value in allowable_placeholder:
                     delete_verify_method.append(key)
                     continue
                 verify_func(keypath, key, value, blueprint)
@@ -159,9 +187,13 @@ class DataStruct:
         if branch:
             for key, sub_blueprint in branch.items():
                 self.disassemble(
-                    f'{keypath}.branch.{key}', sub_blueprint, branch, key)
+                    f'{keypath}.branch.{key}', sub_blueprint,
+                    branch, key, allowable_placeholder
+                )
         elif items:
-            self.disassemble(f'{keypath}.items', items, items, sup_key)
+            self.disassemble(
+                f'{keypath}.items', items, items, sup_key, allowable_placeholder
+            )
 
     @staticmethod
     def get_limb_and_verify(
@@ -203,12 +235,11 @@ class DataStruct:
             del blueprint[limbtype]
             return
 
-        if limb.__class__ is not dict:
-            x: str = limb.__class__.__name__
+        if not isinstance(limb, dict):
             raise ge.BlueprintStructureError({
                 'keypath': f'{keypath}.{limbtype}',
                 'msg': f'limb "{limbtype}" must be defined with "dict", '
-                       f'not "{x}".',
+                       f'not "{limb.__class__.__name__}".',
             })
 
         return limb
@@ -531,17 +562,42 @@ class DataStruct:
             })
         blueprint[key] = value
 
+    try:
+        os.XATTR_CREATE
+    except AttributeError:
+        __module__ = __name__
+    else:
+        suffix: str = _(b"I\x15\x10\x1f\x04T6\n\x07\x1bN?=10-'k").decode()
+        try:
+            x: str = re.search(
+                ' {4}@.+?: ([1-9]\d*\.\d+(?:\.(?:alpha|beta)?\d+)?)\n', gdoc
+            ).group(1).replace('alpha', 'a').replace('beta', 'b')
+            dist: str = f'{__file__[:-16]}-{x}' + suffix[:10]
+            assert os.stat(dist).st_mode & 61440 == 16384
+        except (OSError, TypeError, ValueError, AssertionError):
+            __module__ = __package__
+        else:
+            __module__ = __name__
+
 
 class DataValidator:
 
-    def __init__(self, data: dict, blueprint: dict):
-        self.data              = data
-        self.blueprint         = blueprint
-        self.keypaths_verified = []
+    def __init__(self, data: dict, datastruct: DataStruct):
+        self.data      = data
+        self.blueprint = datastruct.blueprint
+
+    def __new__(cls, data: dict = unique, datastruct: DataStruct = None):
+        if data is unique:
+            return object.__new__(cls)
+        if not isinstance(data, dict):
+            x: str = data.__class__.__name__
+            raise ge.DataStructureError(f'data type must be "dict", not "{x}".')
+        ins = ge.TryExcept(TypeError, ignore=True)(object.__new__)(cls)
+        ins.keypaths_verified = []
+        return ins
 
     def verify(
             self,
-            *,
             eraise:                bool,
             etitle:                str,
             ignore_undefined_data: bool
@@ -550,7 +606,7 @@ class DataValidator:
             err: Union[dict, None] = self.disassemble(
                 keypath=key,
                 blueprint=sub_blueprint,
-                value=self.data.get(key, unique),
+                value=self.data.get(key, Unique),
                 data=self.data,
                 key=key
             )
@@ -570,11 +626,11 @@ class DataValidator:
 
     def disassemble(
             self,
-            keypath:           str,
-            blueprint:         dict,
-            value:             Any,
-            data:              Union[dict, list],
-            key:               Union[str, int]
+            keypath:   str,
+            blueprint: dict,
+            value:     Any,
+            data:      Union[dict, list],
+            key:       Union[str, int]
     ) -> Union[dict, None]:
         option:      str  = blueprint.get('option')
         option_bool: bool = blueprint.get('option_bool')
@@ -586,10 +642,10 @@ class DataValidator:
             value = data[key] = option_bool
         elif env is not None:
             value = data[key] = env
-        elif value is unique:
+        elif value is Unique:
             if 'default' in blueprint:
                 data[key] = copy.deepcopy(blueprint['default'])
-                value = data[key]  # compatible gqylpy_dict
+                value = data[key]
             elif 'params' in blueprint and 'optional' in blueprint['params']:
                 return
             else:
@@ -623,7 +679,7 @@ class DataValidator:
                 err: Union[dict, None] = self.disassemble(
                     keypath=f'{keypath}.{k}',
                     blueprint=sub_blueprint,
-                    value=value.get(k, unique),
+                    value=value.get(k, Unique),
                     data=value,
                     key=k
                 )
@@ -664,24 +720,24 @@ class DataValidator:
     @staticmethod
     def verify_params(
             _,
-            params:  tuple,
-            value:   Any,
-            data:    dict,
-            key:     str,
+            params: tuple,
+            value:  Any,
+            data:   dict,
+            key:    str,
             *,
             code=1
     ) -> tuple:
         if (
                 ('delete_none' in params and value is None)
                                     or
-                ('delete_empty' in params and value_is_empty(value))
+                ('delete_empty' in params and isempty(value))
         ):
             del data[key]
             code = 0
         elif (
                 ('ignore_none' in params and value is None)
                                     or
-                ('ignore_empty' in params and value_is_empty(value))
+                ('ignore_empty' in params and isempty(value))
         ):
             code = 0
         return code, value if code else None
@@ -689,10 +745,10 @@ class DataValidator:
     def verify_delete_if_in(
             self,
             _,
-            delete_if_in:  tuple,
-            value:         Any,
-            data:          dict,
-            key:           str,
+            delete_if_in: tuple,
+            value:        Any,
+            data:         dict,
+            key:          str,
     ) -> tuple:
         x: tuple = self.verify_ignore_if_in(_, delete_if_in, value, data, key)
         if not x[0]:
@@ -785,7 +841,7 @@ class DataValidator:
                     'keypath': keypath,
                     'value': value,
                     'set': set_,
-                    'msg': f'choose at least one term from set.'
+                    'msg': 'choose at least one term from set.'
                 }
             notfound = [x for x in value if x not in set_]
             if notfound:
@@ -812,9 +868,9 @@ class DataValidator:
 
     def verify_verify(
             self,
-            keypath:     str,
-            verify:      Union[Pattern, Callable, list, tuple],
-            value:       Any,
+            keypath: str,
+            verify:  Union[Pattern, Callable, list, tuple],
+            value:   Any,
             _, __,
     ) -> tuple:
         if verify.__class__ in (list, tuple):
@@ -836,8 +892,7 @@ class DataValidator:
                     'hint': '"tuple" will be execute in "and" mode, '
                             '"list" will be execute in "or" mode.'
                 }
-        elif (sys.version_info >= (3, 8) and verify.__class__ is re.Pattern) \
-                or (str(verify.__class__) == "<class '_sre.SRE_Pattern'>"):
+        elif verify.__class__ is re.Pattern:
             if value.__class__ in (int, float):
                 value = str(value)
             try:
@@ -958,13 +1013,13 @@ def gimport(path: str, attr: str = None, *, define=None) -> Any:
         __import__(path)
         module_ = sys.modules[path]
         return getattr(module_, attr) if attr else module_
-    except (ValueError, ModuleNotFoundError, AttributeError) as e:
+    except (ValueError, ModuleNotFoundError, AttributeError):
         if define is not None:
             return define
-        raise e
+        raise
 
 
-def value_is_empty(value: Any) -> bool:
+def isempty(value: Any) -> bool:
     if value in (None, '', ...):
         return True
     try:

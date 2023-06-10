@@ -2,11 +2,13 @@
 [![Release](https://img.shields.io/github/release/gqylpy/gqylpy-datastruct.svg?style=flat-square")](https://github.com/gqylpy/gqylpy-datastruct/releases/latest)
 [![Python Versions](https://img.shields.io/pypi/pyversions/gqylpy_datastruct)](https://pypi.org/project/gqylpy_datastruct)
 [![License](https://img.shields.io/pypi/l/gqylpy_datastruct)](https://github.com/gqylpy/gqylpy-datastruct/blob/master/LICENSE)
-[![Downloads](https://pepy.tech/badge/gqylpy_datastruct/month)](https://pepy.tech/project/gqylpy_datastruct)
+[![Downloads](https://pepy.tech/badge/gqylpy_datastruct)](https://pepy.tech/project/gqylpy_datastruct)
 
 # gqylpy-datastruct
 
 > 创建一张蓝图来规划好程序需要的数据结构，并在之后使用该蓝图去校验到来的数据是否如期。
+
+_这是一个雏形。_
 
 <kbd>pip3 install gqylpy_datastruct</kbd>
 
